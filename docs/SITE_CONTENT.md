@@ -41,7 +41,9 @@ All quoted text is copied **verbatim** from the live site, including its origina
 | Email | info@afterhoursworkshop.co.nz |
 | Phone | (027) 770 - 0486 |
 | Social media | None found |
-| Map embed | None found |
+| Map embed | Google map of St Johns in the footer of every page (seen in `docs/design-reference/`) |
+
+**Contact form** (About and Services pages, from the screenshots): Name, split into First Name *(required)* and Last Name *(required)*; Email *(required)*; a "Sign up for news and updates" checkbox; Message *(required)*; and a "Submit" button.
 
 ## 4. Opening hours
 
@@ -182,6 +184,6 @@ None of these were found on the site. **Do not invent them.** Make them configur
 12. **Social media and Google Business profile:** none linked.
 13. **Logo and brand assets:** text logo only. No brand colours or logo file found.
 14. **Real photos:** all images are stock.
-15. **Contact form fields:** the forms on About and Services load through JavaScript, so their fields could not be captured.
+15. **Newsletter:** the contact form has a "Sign up for news and updates" checkbox, but there's no sign of a newsletter actually being sent. The spec says no automatic marketing messages.
 16. **Payment methods, cancellation policy, warranty and courtesy car:** not mentioned.
 17. **Booking lead time and slot length:** not stated.

@@ -23,6 +23,7 @@ Next.js (App Router), TypeScript (strict), Tailwind, shadcn/ui, Supabase (Postgr
 - Reuse one customer profile per person (match on normalised email/phone).
 - Handle loading and error states. Prefer simple, maintainable code over clever code.
 - Never commit `.env*` files or secrets.
+- Public site visuals must match docs/design-reference/ (existing Squarespace design). Define colors, fonts, spacing as Tailwind design tokens and reuse them.
 
 ## Workflow
 Inspect, then Plan (wait for approval), then Build one numbered stage at a time (spec section 12). Run lint, typecheck, and tests before finishing a stage. Do not start the next stage until asked.

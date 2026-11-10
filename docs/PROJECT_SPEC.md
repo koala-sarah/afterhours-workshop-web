@@ -28,7 +28,7 @@ Rebuild and improve the website for **After Hours Workshop**, an automotive work
 Before coding:
 
 1. Inspect the existing website: pages, content, navigation, images, services, branding, contact info, business details.
-2. Preserve business identity and important content. Improve design and usability without removing important information.
+2. Preserve business identity and important content. Preserve the existing website's visual design (layout, colors, fonts, imagery style, page structure). Reference screenshots are in docs/design-reference/. Do not redesign. Only improve usability and add the new booking system in the same visual style.
 3. If information is missing or unverifiable, make it configurable or ask. Never invent prices, hours, addresses, phone numbers, or claims.
 
 ## 4. Customer-Facing Website
@@ -145,7 +145,7 @@ Suggested tables:
 
 Works well on desktop, tablet, and mobile.
 
-- Public site: modern automotive workshop, clean typography, strong hierarchy, high-quality imagery, clear navigation, strong booking CTA, professional but approachable.
+- Public site: match the existing Squarespace design shown in docs/design-reference/. Keep the same look and feel, then extend it consistently to new pages (booking form, etc.).
 - Admin: sidebar navigation, overview cards, data tables, search and filters, status badges, detail pages, responsive layouts.
 - Prioritise usability over decorative animation.
 
