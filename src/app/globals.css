@@ -1,0 +1,299 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/*
+ * Afterhours Workshop design tokens.
+ *
+ * Every value below is reproduced from the existing Squarespace site
+ * (site.css theme variables + docs/design-reference/ screenshots).
+ * Do not invent new colours or fonts here. See docs/DESIGN_SYSTEM.md.
+ */
+
+/* `dark:` utilities only apply under an explicit `.dark` ancestor, never via the OS setting.
+   The existing site has no dark mode. */
+@custom-variant dark (&:is(.dark *));
+
+/* ------------------------------------------------------------------ */
+/* 1. Static brand tokens -> Tailwind utilities                        */
+/* ------------------------------------------------------------------ */
+@theme {
+  /* Palette (Squarespace: accent / lightAccent / darkAccent / black / white) */
+  --color-steel: #c2c8cc; /* accent       hsl(204 8.93% 78.04%) */
+  --color-butter: #f9eea5; /* lightAccent  hsl(52.14 87.5% 81.18%) */
+  --color-olive: #3d4435; /* darkAccent   hsl(88 12.4% 23.73%) */
+  --color-ink: #000000; /* black */
+  --color-paper: #ffffff; /* white */
+
+  /* Body text sizes (Squarespace: small / normal / large text) */
+  --text-body-sm: 0.9rem;
+  --text-body-sm--line-height: 1.5;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5;
+  --text-body-lg: 1.4rem;
+  --text-body-lg--line-height: 1.5;
+
+  /* Layout (Squarespace: maxPageWidth / pagePadding / mobile gutter) */
+  --container-site: 1400px;
+  --spacing-gutter: 4vw;
+  --spacing-gutter-mobile: 6vw;
+  --spacing-header-y: 2vw;
+
+  /* Section vertical padding (Squarespace: section-height small / medium / large) */
+  --spacing-section-sm: 3.3vmax;
+  --spacing-section-md: 6.6vmax;
+  --spacing-section-lg: 10vmax;
+
+  /* Grid gap between service cards / images */
+  --spacing-card-gap: 10px;
+
+  /* Form fields (Squarespace: form-field-* tweaks) */
+  --spacing-field-x: 15px;
+  --spacing-field-y: 8px;
+  --spacing-field-gap: 20px;
+  --spacing-label-gap: 4px;
+  --radius-field: 9999px; /* "form-field-shape-pill" */
+  --radius-textarea: 1.25rem; /* pill style applied to a multi-line box (approx. from screenshots) */
+  --radius-checkbox: 5px;
+}
+
+/* ------------------------------------------------------------------ */
+/* 2. Tokens that depend on runtime variables (fonts, fluid headings,  */
+/*    section themes, shadcn semantic colours)                         */
+/* ------------------------------------------------------------------ */
+@theme inline {
+  /* Fonts (loaded with next/font in app/layout.tsx) */
+  --font-heading: var(--font-archivo-black), "Arial Black", Arial, sans-serif;
+  --font-body: var(--font-space-grotesk), Arial, Helvetica, sans-serif;
+  --font-sans: var(--font-body);
+
+  /* Fluid heading sizes (Squarespace formula, see :root below) */
+  --text-h1: var(--fs-h1);
+  --text-h1--line-height: 1.2;
+  --text-h1--letter-spacing: -0.02em;
+  --text-h2: var(--fs-h2);
+  --text-h2--line-height: 1.2;
+  --text-h2--letter-spacing: -0.02em;
+  --text-h3: var(--fs-h3);
+  --text-h3--line-height: 1.2;
+  --text-h3--letter-spacing: -0.02em;
+  --text-h4: var(--fs-h4);
+  --text-h4--line-height: 1.2;
+  --text-h4--letter-spacing: -0.02em;
+  --text-site-title: 1.5rem;
+  --text-site-title--line-height: 1.2;
+  --text-site-title--letter-spacing: -0.02em;
+
+  /* Section theme colours: change with the surrounding [data-section] */
+  --color-section: var(--section-bg);
+  --color-section-heading: var(--section-heading);
+  --color-section-subheading: var(--section-subheading);
+  --color-section-text: var(--section-text);
+  --color-section-muted: var(--section-muted);
+  --color-section-button: var(--section-button-bg);
+  --color-section-button-foreground: var(--section-button-fg);
+
+  /* shadcn/ui semantic colours mapped onto the brand palette */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+}
+
+:root {
+  /*
+   * Squarespace heading sizes: h1 4, h2 2.8, h3 2.2, h4 1.6 (rem).
+   * Desktop/landscape: min((v-1) * 1.2vw + 1rem, max((v-1) * 0.012 * 1400px + 1rem, v * 1rem))
+   * Mobile portrait:   (v-1) * min(1.2vh, 10.8px) + 1rem
+   */
+  --fs-h1: calc(3 * min(1.2vh, 10.8px) + 1rem);
+  --fs-h2: calc(1.8 * min(1.2vh, 10.8px) + 1rem);
+  --fs-h3: calc(1.2 * min(1.2vh, 10.8px) + 1rem);
+  --fs-h4: calc(0.6 * min(1.2vh, 10.8px) + 1rem);
+
+  /* shadcn/ui semantic tokens (used by components and the future admin area) */
+  --background: var(--color-paper);
+  --foreground: var(--color-ink);
+  --card: var(--color-paper);
+  --card-foreground: var(--color-ink);
+  --popover: var(--color-paper);
+  --popover-foreground: var(--color-ink);
+  --primary: var(--color-ink);
+  --primary-foreground: var(--color-paper);
+  --secondary: var(--color-steel);
+  --secondary-foreground: var(--color-ink);
+  --muted: #eef0f1;
+  --muted-foreground: #5b6168;
+  --accent: var(--color-butter);
+  --accent-foreground: var(--color-ink);
+  --destructive: #b42318;
+  --border: rgb(0 0 0 / 0.15);
+  --input: rgb(0 0 0 / 0.6);
+  --ring: var(--color-olive);
+  --radius: 0.4rem; /* 6.4px, Squarespace "rounded" button radius */
+  --sidebar: var(--color-olive);
+  --sidebar-foreground: var(--color-paper);
+  --sidebar-primary: var(--color-steel);
+  --sidebar-primary-foreground: var(--color-ink);
+  --sidebar-accent: rgb(255 255 255 / 0.1);
+  --sidebar-accent-foreground: var(--color-paper);
+  --sidebar-border: rgb(255 255 255 / 0.15);
+  --sidebar-ring: var(--color-steel);
+
+  /* Default section theme = page body (white). */
+  --section-bg: var(--color-paper);
+  --section-heading: var(--color-ink);
+  --section-subheading: var(--color-ink);
+  --section-text: var(--color-ink);
+  --section-muted: rgb(0 0 0 / 0.6);
+  --section-button-bg: var(--color-ink);
+  --section-button-fg: var(--color-paper);
+}
+
+@media screen and (min-width: 768px), screen and (orientation: landscape) {
+  :root {
+    --fs-h1: min(calc(3 * 1.2vw + 1rem), max(calc(3 * 0.012 * 1400px + 1rem), 4rem));
+    --fs-h2: min(calc(1.8 * 1.2vw + 1rem), max(calc(1.8 * 0.012 * 1400px + 1rem), 2.8rem));
+    --fs-h3: min(calc(1.2 * 1.2vw + 1rem), max(calc(1.2 * 0.012 * 1400px + 1rem), 2.2rem));
+    --fs-h4: min(calc(0.6 * 1.2vw + 1rem), max(calc(0.6 * 0.012 * 1400px + 1rem), 1.6rem));
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* 3. Section themes (Squarespace data-section-theme values)           */
+/*    Usage: <section data-section="light"> or the <Section> component */
+/* ------------------------------------------------------------------ */
+
+/* "bright": steel background (Home hero, Contact us) */
+[data-section="bright"] {
+  --section-bg: var(--color-steel);
+  --section-heading: var(--color-ink);
+  --section-subheading: var(--color-ink);
+  --section-text: var(--color-ink);
+  --section-muted: rgb(0 0 0 / 0.6);
+  --section-button-bg: var(--color-ink);
+  --section-button-fg: var(--color-steel);
+}
+
+/* "light": butter background, olive headings (Services, About) */
+[data-section="light"] {
+  --section-bg: var(--color-butter);
+  --section-heading: var(--color-olive);
+  --section-subheading: var(--color-ink);
+  --section-text: var(--color-ink);
+  --section-muted: var(--color-olive);
+  --section-button-bg: var(--color-ink);
+  --section-button-fg: var(--color-paper);
+}
+
+/* "dark": olive background, white text (Appointments page) */
+[data-section="dark"] {
+  --section-bg: var(--color-olive);
+  --section-heading: var(--color-paper);
+  --section-subheading: var(--color-paper);
+  --section-text: var(--color-paper);
+  --section-muted: rgb(255 255 255 / 0.7);
+  --section-button-bg: var(--color-steel);
+  --section-button-fg: var(--color-ink);
+}
+
+/* "dark-bold": olive background, steel headings (Home "Schedule today") */
+[data-section="dark-bold"] {
+  --section-bg: var(--color-olive);
+  --section-heading: var(--color-steel);
+  --section-subheading: var(--color-steel);
+  --section-text: var(--color-paper);
+  --section-muted: var(--color-steel);
+  --section-button-bg: var(--color-steel);
+  --section-button-fg: var(--color-ink);
+}
+
+/* "black": footer */
+[data-section="black"] {
+  --section-bg: var(--color-ink);
+  --section-heading: var(--color-paper);
+  --section-subheading: var(--color-paper);
+  --section-text: var(--color-paper);
+  --section-muted: rgb(255 255 255 / 0.7);
+  --section-button-bg: var(--color-steel);
+  --section-button-fg: var(--color-ink);
+}
+
+[data-section] {
+  background-color: var(--section-bg);
+  color: var(--section-text);
+}
+
+/* ------------------------------------------------------------------ */
+/* 4. Base styles                                                      */
+/* ------------------------------------------------------------------ */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-body antialiased;
+    font-size: 16px;
+  }
+
+  body {
+    @apply bg-background text-foreground font-semibold;
+    line-height: 1.5;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-heading font-normal uppercase;
+  }
+
+  h1 {
+    @apply text-h1;
+  }
+  h2 {
+    @apply text-h2;
+  }
+  h3 {
+    @apply text-h3;
+  }
+  h4 {
+    @apply text-h4;
+  }
+
+  /* Squarespace: heading XL/L/M use headingColor, heading S uses its own colour */
+  [data-section] :is(h1, h2, h3) {
+    color: var(--section-heading);
+  }
+  [data-section] h4 {
+    color: var(--section-subheading);
+  }
+}
