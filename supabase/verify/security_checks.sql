@@ -540,6 +540,147 @@ end $$;
 
 reset role;
 
+-- -----------------------------------------------------------------------------
+-- 6. Customer and vehicle management
+-- -----------------------------------------------------------------------------
+set local role authenticated;
+select set_config('request.jwt.claims',
+  '{"role":"authenticated","sub":"00000000-0000-4000-8000-00000000a001"}', true);
+
+do $$
+declare
+  v_admin uuid := '00000000-0000-4000-8000-00000000a001';
+  v_customer uuid;
+  v_other uuid;
+  v_appt uuid;
+  v_new_vehicle uuid;
+  v_other_vehicle uuid;
+begin
+  select id into v_customer from public.customers where email_normalized = 'test.customer@example.com';
+  select a.id into v_appt from public.appointments a
+  where a.customer_id = v_customer and a.preferred_time = '18:00';
+
+  -- The list view shows vehicles and appointment counts, searchable by plate.
+  if not exists (select 1 from public.admin_customers where id = v_customer
+                 and vehicle_count = 1 and appointment_count = 2 and registrations like '%ABC123%') then
+    raise exception 'FAIL: admin_customers view row is wrong';
+  end if;
+
+  -- Editing a customer is recorded (field names only).
+  update public.customers set phone = '021 555 0000' where id = v_customer;
+  if not exists (select 1 from public.activities where customer_id = v_customer
+                 and activity_type = 'customer.updated' and created_by = v_admin
+                 and description = 'Customer details updated: phone') then
+    raise exception 'FAIL: customer edit not recorded in activity history';
+  end if;
+
+  -- Adding and editing a vehicle is recorded.
+  insert into public.vehicles (customer_id, make, model, year, registration_number)
+  values (v_customer, 'Mazda', 'MX-5', 1994, 'xyz 789')
+  returning id into v_new_vehicle;
+  update public.vehicles set model = 'MX-5 Miata' where id = v_new_vehicle;
+  if (select count(*) from public.activities where related_id = v_new_vehicle and created_by = v_admin
+      and activity_type in ('vehicle.added', 'vehicle.updated')) <> 2 then
+    raise exception 'FAIL: vehicle add / edit not recorded';
+  end if;
+
+  -- The same customer can't have the same plate twice.
+  begin
+    insert into public.vehicles (customer_id, make, model, registration_number)
+    values (v_customer, 'Mazda', 'MX-5', 'XYZ-789');
+    raise exception 'FAIL: duplicate registration for one customer was accepted';
+  exception when unique_violation then null;
+  end;
+
+  -- A vehicle can't be moved to another customer.
+  insert into public.customers (full_name, email) values ('Other Customer', 'other.customer@example.com')
+  returning id into v_other;
+  insert into public.vehicles (customer_id, make, model, registration_number)
+  values (v_other, 'Honda', 'Civic', 'OTH1')
+  returning id into v_other_vehicle;
+  begin
+    update public.vehicles set customer_id = v_other where id = v_new_vehicle;
+    raise exception 'FAIL: vehicle moved to another customer';
+  exception when insufficient_privilege then null;
+  end;
+
+  -- Two customers can't share an email address.
+  begin
+    update public.customers set email = ' Test.Customer@Example.com ' where id = v_other;
+    raise exception 'FAIL: duplicate customer email was accepted';
+  exception when unique_violation then null;
+  end;
+
+  -- An appointment can only be linked to its own customer's vehicle.
+  begin
+    perform public.set_appointment_vehicle(v_appt, v_other_vehicle);
+    raise exception 'FAIL: linked appointment to another customer''s vehicle';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'vehicle_mismatch' then raise exception 'FAIL: expected vehicle_mismatch, got %', sqlerrm; end if;
+  end;
+  begin
+    update public.appointments set vehicle_id = v_other_vehicle where id = v_appt;
+    raise exception 'FAIL: direct update linked another customer''s vehicle';
+  exception when foreign_key_violation then null;
+  end;
+
+  perform public.set_appointment_vehicle(v_appt, v_new_vehicle);
+  if not exists (select 1 from public.appointments where id = v_appt and vehicle_id = v_new_vehicle) then
+    raise exception 'FAIL: appointment vehicle not changed';
+  end if;
+  if not exists (select 1 from public.activities where related_id = v_appt and created_by = v_admin
+                 and activity_type = 'appointment.vehicle_changed'
+                 and description = 'Vehicle changed to Mazda MX-5 Miata (XYZ789)') then
+    raise exception 'FAIL: vehicle change not recorded';
+  end if;
+
+  -- Internal customer note.
+  insert into public.activities (customer_id, related_type, related_id, activity_type, description, created_by)
+  values (v_customer, 'CUSTOMER', v_customer, 'customer.note', 'Prefers text messages', v_admin);
+end $$;
+
+reset role;
+
+set local role authenticated;
+select set_config('request.jwt.claims',
+  '{"role":"authenticated","sub":"00000000-0000-4000-8000-00000000a002"}', true);
+
+do $$
+begin
+  if (select count(*) from public.admin_customers) <> 0 then
+    raise exception 'FAIL: non-admin can see admin_customers';
+  end if;
+  begin
+    perform public.set_appointment_vehicle(gen_random_uuid(), gen_random_uuid());
+    raise exception 'FAIL: non-admin could call set_appointment_vehicle';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'forbidden' then raise exception 'FAIL: expected forbidden, got %', sqlerrm; end if;
+  end;
+  update public.vehicles set model = 'hacked';
+  if found then raise exception 'FAIL: non-admin updated vehicles'; end if;
+end $$;
+
+reset role;
+
+set local role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+
+do $$
+begin
+  begin
+    perform 1 from public.admin_customers limit 1;
+    raise exception 'FAIL: anon can read admin_customers';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.set_appointment_vehicle(gen_random_uuid(), gen_random_uuid());
+    raise exception 'FAIL: anon could call set_appointment_vehicle';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+
+reset role;
+
 select 'ALL SECURITY CHECKS PASSED' as result;
 
 rollback;

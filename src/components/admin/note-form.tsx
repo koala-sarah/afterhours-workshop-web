@@ -3,12 +3,15 @@
 import { useActionState, useEffect, useRef } from "react";
 
 import { Button } from "@/components/ui/button";
-import { addAppointmentNote, type AdminActionState } from "@/lib/appointments/actions";
+import type { AdminActionState } from "@/lib/appointments/actions";
 
-export function NoteForm({ appointmentId }: { appointmentId: string }) {
-  const [state, formAction, pending] = useActionState<AdminActionState, FormData>(addAppointmentNote, {
-    status: "idle",
-  });
+import { adminTextareaClass } from "./fields";
+
+type NoteAction = (state: AdminActionState, formData: FormData) => Promise<AdminActionState>;
+
+/** Internal note on a record's history (appointment or customer). Only admins see notes. */
+export function NoteForm({ recordId, action }: { recordId: string; action: NoteAction }) {
+  const [state, formAction, pending] = useActionState<AdminActionState, FormData>(action, { status: "idle" });
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -17,7 +20,7 @@ export function NoteForm({ appointmentId }: { appointmentId: string }) {
 
   return (
     <form ref={formRef} action={formAction} className="space-y-2">
-      <input type="hidden" name="id" value={appointmentId} />
+      <input type="hidden" name="id" value={recordId} />
       <label htmlFor="note" className="text-body-sm font-semibold">
         Add an internal note
       </label>
@@ -27,7 +30,7 @@ export function NoteForm({ appointmentId }: { appointmentId: string }) {
         required
         maxLength={2000}
         rows={3}
-        className="w-full rounded-md border border-input bg-background px-3 py-2 text-body-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+        className={adminTextareaClass}
         placeholder="Only visible to admins"
       />
       <div className="flex items-center gap-3">

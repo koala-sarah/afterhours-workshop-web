@@ -12,6 +12,7 @@ Supabase Postgres 17. Everything is defined in version-controlled migrations in 
 | `…0600_reference_data.sql` | Services, business hours, settings (needed in production) |
 | `…0700_server_only_submissions.sql` | Submit functions callable by the server only; per-client throttling |
 | `…0800_appointment_management.sql` | `admin_appointments` view, approval guard trigger, admin appointment functions |
+| `…0900_customer_vehicle_management.sql` | `admin_customers` view, appointment vehicle must belong to its customer, activity history for customer / vehicle edits, `set_appointment_vehicle` |
 
 `supabase/seed.sql` adds one sample enquiry for **local development only**.
 
@@ -96,6 +97,25 @@ A `BEFORE UPDATE` trigger on `appointments` applies to **every** update path (th
 Every status change is written to `activities` with a readable description (e.g. "Appointment approved for Mon 16 Nov 2026, 18:00 - Confirmed by phone"), the admin's reason and the slot.
 
 Extra error codes: `slot_conflict`, `invalid_transition`, `invalid_duration`, `not_found`, `forbidden`, `invalid_note`.
+
+## Admin customer and vehicle management
+
+Admins edit `customers` and `vehicles` directly through RLS (admin-only policies). The database adds:
+
+| Rule | How |
+| --- | --- |
+| One profile per email | Unique index on `email_normalized` (existing). The app also checks first and links to the existing profile. |
+| Shared phone numbers | Allowed (households). Creating a customer whose phone is already on file asks the admin to confirm it's a different person; the profile shows "Same phone number as". |
+| One plate per customer | Unique `(customer_id, registration_normalized)` (existing). |
+| Vehicle stays with its customer | Authenticated users can only update `make`, `model`, `year`, `registration_number`, `additional_information` (column grants). A car sold to another customer is added again under the new owner. |
+| Appointment vehicle belongs to the same customer | Composite foreign key `appointments (vehicle_id, customer_id) → vehicles (id, customer_id)`. Applies to every update path. |
+| Activity history | Triggers log `customer.updated` (changed field names only, no old values), `vehicle.added`, `vehicle.updated`, `appointment.vehicle_changed`. Internal customer notes are `customer.note` activities (append-only). |
+
+`admin_customers` (view, `security_invoker`) adds vehicle count, plates (for search), appointment counts and the last request time to each customer.
+
+`set_appointment_vehicle(appointment_id, vehicle_id)` links an appointment to another of the same customer's vehicles. Error codes: `vehicle_mismatch` (vehicle belongs to someone else), `duplicate_request` (same open request already exists for that vehicle), `not_found`, `forbidden`.
+
+Because `appointments` now has two foreign keys to `vehicles`, PostgREST embeds must name one: `vehicles!appointments_vehicle_id_fkey(...)`.
 
 ## Applying the migrations
 

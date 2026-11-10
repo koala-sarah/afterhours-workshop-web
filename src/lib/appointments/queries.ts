@@ -1,5 +1,6 @@
 import "server-only";
 
+import { searchFilter } from "@/lib/admin/search";
 import { requireAdmin } from "@/lib/auth/dal";
 import type { Database } from "@/lib/supabase/database.types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -17,20 +18,6 @@ export type AppointmentListRow = Database["public"]["Views"]["admin_appointments
 
 export function isAppointmentStatus(value: unknown): value is AppointmentStatus {
   return typeof value === "string" && (APPOINTMENT_STATUSES as string[]).includes(value);
-}
-
-/** Keep only characters that are safe inside a PostgREST filter. */
-function searchTerms(raw: string) {
-  const text = raw
-    .normalize("NFKC")
-    .replace(/[^\p{L}\p{N}@.\s'_-]/gu, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 80);
-  let digits = raw.replace(/\D/g, "");
-  if (digits.startsWith("64") && digits.length > 8) digits = `0${digits.slice(2)}`;
-  const registration = raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
-  return { text, digits, registration };
 }
 
 export async function listAppointments(options: {
@@ -52,16 +39,14 @@ export async function listAppointments(options: {
   if (options.status) request = request.eq("status", options.status);
 
   if (options.query) {
-    const { text, digits, registration } = searchTerms(options.query);
-    const filters: string[] = [];
-    if (text) {
-      filters.push(`customer_name.ilike.*${text}*`);
-      filters.push(`email_normalized.ilike.*${text.toLowerCase()}*`);
-    }
-    if (digits.length >= 3) filters.push(`phone_normalized.ilike.*${digits}*`);
-    if (registration.length >= 2) filters.push(`registration_normalized.ilike.*${registration}*`);
-    if (filters.length === 0) return { rows: [] as AppointmentListRow[], total: 0, page };
-    request = request.or(filters.join(","));
+    const filter = searchFilter(options.query, {
+      name: "customer_name",
+      email: "email_normalized",
+      phone: "phone_normalized",
+      registration: "registration_normalized",
+    });
+    if (!filter) return { rows: [] as AppointmentListRow[], total: 0, page };
+    request = request.or(filter);
   }
 
   const { data, count, error } = await request;
@@ -107,7 +92,7 @@ export async function getAppointmentDetail(id: string) {
     .select(
       `*,
        customer:customers(id, full_name, email, phone, notes, created_at),
-       vehicle:vehicles(id, make, model, year, registration_number, additional_information),
+       vehicle:vehicles!appointments_vehicle_id_fkey(id, make, model, year, registration_number, additional_information),
        service:services(id, name, price_label),
        approver:profiles(full_name, email)`,
     )

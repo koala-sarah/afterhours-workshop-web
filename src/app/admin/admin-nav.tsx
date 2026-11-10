@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarClockIcon, LayoutDashboardIcon } from "lucide-react";
+import { CalendarClockIcon, LayoutDashboardIcon, UsersIcon } from "lucide-react";
 import { cn } from "cn";
 
 // Sections are added here as each build stage lands (customers, enquiries, ...).
 const items = [
   { href: "/admin", label: "Overview", icon: LayoutDashboardIcon },
   { href: "/admin/appointments", label: "Appointments", icon: CalendarClockIcon },
+  { href: "/admin/customers", label: "Customers", icon: UsersIcon },
 ] as const;
 
 /** Nav links; `pathname` is null while the current URL isn't known yet (Suspense fallback). */

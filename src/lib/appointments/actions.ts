@@ -19,6 +19,7 @@ const ERRORS: Record<string, string> = {
   not_found: "This appointment no longer exists.",
   forbidden: "You don’t have permission to do that.",
   invalid_note: "Notes must be between 1 and 2000 characters.",
+  vehicle_mismatch: "That vehicle belongs to a different customer.",
 };
 
 const id = z.uuid();
@@ -37,6 +38,7 @@ const schemas = {
     reason: optionalText(500),
   }),
   note: z.object({ id, note: z.string().trim().min(1, { error: "Write a note first." }).max(2000) }),
+  vehicle: z.object({ id, vehicleId: z.uuid({ error: "Choose a vehicle." }) }),
 };
 
 type Kind = keyof typeof schemas;
@@ -47,6 +49,7 @@ const SUCCESS: Record<Kind, string> = {
   propose: "New time proposed. Let the customer know, then approve once they agree.",
   status: "Status updated.",
   note: "Note added.",
+  vehicle: "Vehicle updated.",
 };
 
 async function run<K extends Kind>(
@@ -121,5 +124,12 @@ export async function updateAppointmentStatus(_: AdminActionState, formData: For
 export async function addAppointmentNote(_: AdminActionState, formData: FormData) {
   return run("note", formData, (supabase, v) =>
     supabase.rpc("add_appointment_note", { p_appointment_id: v.id, p_note: v.note }),
+  );
+}
+
+/** Link the appointment to another of the same customer's vehicles. */
+export async function setAppointmentVehicle(_: AdminActionState, formData: FormData) {
+  return run("vehicle", formData, (supabase, v) =>
+    supabase.rpc("set_appointment_vehicle", { p_appointment_id: v.id, p_vehicle_id: v.vehicleId }),
   );
 }

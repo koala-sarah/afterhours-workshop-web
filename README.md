@@ -112,6 +112,16 @@ Supabase dashboard → **Authentication → Users → … → Send password reco
 
 Approval works without email. Customer emails are added in Stage 10.
 
+## Managing customers and vehicles (admin)
+
+`/admin/customers` lists customers (newest first) with their vehicles and request counts. Search by name, phone (any format), email or registration.
+
+- **Customer profile:** contact details, profile notes, vehicles, appointment history, enquiries, and the full activity history with internal notes.
+- **New customer** (phone / walk-in customers): an email already on file is refused with a link to the existing profile; a phone number already on file asks you to confirm it's a different person. Website bookings and enquiries create or reuse customers automatically.
+- **Edit details:** name, email, phone, profile notes. Every change is recorded in the history (which fields changed and who changed them).
+- **Vehicles:** add and edit from the profile. A customer can have several vehicles but not the same plate twice.
+- **Link an appointment to the right vehicle:** on the appointment page, pick another of the customer's vehicles, or add a new one and link it in one step. The database refuses a vehicle that belongs to a different customer.
+
 ## Booking requests
 
 `/appointments` has the booking request form (spec section 5). A submission is always a **request** (`PENDING`). The visitor sees *"Your appointment request has been received. We will contact you to confirm your appointment."* and only an admin can approve it.

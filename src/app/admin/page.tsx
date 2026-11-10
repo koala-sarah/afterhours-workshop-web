@@ -5,12 +5,17 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { formatDateTime } from "@/lib/appointments/format";
 import { countAppointmentsByStatus, listUpcomingApproved } from "@/lib/appointments/queries";
 import { requireAdmin } from "@/lib/auth/dal";
+import { listRecentCustomers } from "@/lib/customers/queries";
 
 export const metadata: Metadata = { title: "Overview" };
 
 export default async function AdminOverviewPage() {
   const admin = await requireAdmin("/admin");
-  const [counts, upcoming] = await Promise.all([countAppointmentsByStatus(), listUpcomingApproved(5)]);
+  const [counts, upcoming, recentCustomers] = await Promise.all([
+    countAppointmentsByStatus(),
+    listUpcomingApproved(5),
+    listRecentCustomers(5),
+  ]);
 
   const cards = [
     { label: "Pending requests", value: counts.PENDING, href: "/admin/appointments?status=PENDING", highlight: counts.PENDING > 0 },
@@ -65,8 +70,34 @@ export default async function AdminOverviewPage() {
         )}
       </section>
 
+      <section className="space-y-3">
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="font-body text-base font-semibold normal-case">Recently added customers</h2>
+          <Link href="/admin/customers" className="text-body-sm underline-offset-4 hover:underline">
+            View all
+          </Link>
+        </div>
+        {recentCustomers.length === 0 ? (
+          <p className="rounded-lg border border-dashed p-6 text-center text-muted-foreground">No customers yet.</p>
+        ) : (
+          <ul className="divide-y rounded-lg border">
+            {recentCustomers.map((row) => (
+              <li key={row.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+                <Link href={`/admin/customers/${row.id}`} className="font-semibold underline-offset-4 hover:underline">
+                  {row.full_name}
+                </Link>
+                <span className="text-body-sm text-muted-foreground">
+                  {row.appointment_count ?? 0} request{row.appointment_count === 1 ? "" : "s"} · added{" "}
+                  {formatDateTime(row.created_at)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       <p className="text-body-sm text-muted-foreground">
-        Customers, enquiries and follow-up tasks will appear here as they are built.
+        Enquiries and follow-up tasks will appear here as they are built.
       </p>
     </div>
   );

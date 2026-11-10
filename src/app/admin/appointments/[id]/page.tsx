@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeftIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { ActivityTimeline } from "@/components/admin/activity-timeline";
+import { BackLink } from "@/components/admin/back-link";
+import { NoteForm } from "@/components/admin/note-form";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { EmailText } from "@/components/site/email-text";
+import { isUuid } from "@/lib/admin/ids";
+import { addAppointmentNote } from "@/lib/appointments/actions";
 import {
   STATUS_LABELS,
   formatClock,
@@ -21,18 +25,17 @@ import {
   type AppointmentListRow,
 } from "@/lib/appointments/queries";
 import { requireAdmin } from "@/lib/auth/dal";
+import { listCustomerVehicles } from "@/lib/customers/queries";
 
 import { AppointmentActions } from "./appointment-actions";
-import { NoteForm } from "./note-form";
+import { VehicleLinkForm } from "./vehicle-link-form";
 
 export const metadata: Metadata = { title: "Appointment" };
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default async function AppointmentDetailPage({ params }: PageProps<"/admin/appointments/[id]">) {
   const { id } = await params;
   await requireAdmin(`/admin/appointments/${id}`);
-  if (!UUID.test(id)) notFound();
+  if (!isUuid(id)) notFound();
 
   const detail = await getAppointmentDetail(id);
   if (!detail) notFound();
@@ -50,17 +53,16 @@ export default async function AppointmentDetailPage({ params }: PageProps<"/admi
     label: `${o.label}: ${formatDate(o.date)}, ${formatTimeOfDay(o.time)}`,
   }));
 
-  const [schedule, defaultDuration] = await Promise.all([
+  const [schedule, defaultDuration, customerVehicles] = await Promise.all([
     listApprovedOnDates(slotOptions.map((o) => o.date), a.id),
     getDefaultDuration(),
+    listCustomerVehicles(a.customer_id),
   ]);
 
   return (
     <div className="max-w-6xl space-y-8">
       <div className="space-y-3">
-        <Link href="/admin/appointments" className="inline-flex items-center gap-1 text-body-sm text-muted-foreground hover:underline">
-          <ArrowLeftIcon aria-hidden className="size-4" /> All appointments
-        </Link>
+        <BackLink href="/admin/appointments">All appointments</BackLink>
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-h3">{a.customer?.full_name ?? "Appointment"}</h1>
           <StatusBadge status={a.status} />
@@ -114,7 +116,11 @@ export default async function AppointmentDetailPage({ params }: PageProps<"/admi
 
           <div className="grid gap-8 md:grid-cols-2">
             <Card title="Customer">
-              <Row label="Name">{a.customer?.full_name}</Row>
+              <Row label="Name">
+                <Link href={`/admin/customers/${a.customer_id}`} className="font-semibold underline underline-offset-4">
+                  {a.customer?.full_name}
+                </Link>
+              </Row>
               {a.customer?.phone && (
                 <Row label="Phone">
                   <a href={`tel:${a.customer.phone}`} className="underline-offset-4 hover:underline">
@@ -150,31 +156,18 @@ export default async function AppointmentDetailPage({ params }: PageProps<"/admi
               ) : (
                 <p className="text-muted-foreground">No vehicle linked.</p>
               )}
+              <VehicleLinkForm
+                appointmentId={a.id}
+                customerId={a.customer_id}
+                currentVehicleId={a.vehicle_id}
+                vehicles={customerVehicles}
+              />
             </Card>
           </div>
 
           <Card title="History">
-            <NoteForm appointmentId={a.id} />
-            {activities.length === 0 ? (
-              <p className="text-muted-foreground">No activity yet.</p>
-            ) : (
-              <ol className="space-y-4 border-l pl-4">
-                {activities.map((item) => (
-                  <li key={item.id} className="space-y-0.5">
-                    <p className={item.activity_type === "appointment.note" ? "whitespace-pre-line" : "font-semibold"}>
-                      {item.activity_type === "appointment.note" && (
-                        <span className="mr-2 rounded bg-butter px-1.5 py-0.5 text-xs font-semibold">Note</span>
-                      )}
-                      {item.description}
-                    </p>
-                    <p className="text-body-sm text-muted-foreground">
-                      {formatDateTime(item.created_at)} ·{" "}
-                      {item.author ? (item.author.full_name ?? item.author.email) : "Website"}
-                    </p>
-                  </li>
-                ))}
-              </ol>
-            )}
+            <NoteForm recordId={a.id} action={addAppointmentNote} />
+            <ActivityTimeline items={activities} />
           </Card>
 
           {otherRequests.length > 0 && (

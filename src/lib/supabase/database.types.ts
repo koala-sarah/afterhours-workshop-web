@@ -28,6 +28,12 @@ isOneToOne: false
       foreignKeyName: "activities_customer_id_fkey"
       columns: ["customer_id"]
 isOneToOne: false
+      referencedRelation: "admin_customers"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "activities_customer_id_fkey"
+      columns: ["customer_id"]
+isOneToOne: false
       referencedRelation: "customers"
       referencedColumns: ["id"]
     }
@@ -54,6 +60,12 @@ isOneToOne: false
       foreignKeyName: "appointments_customer_id_fkey"
       columns: ["customer_id"]
 isOneToOne: false
+      referencedRelation: "admin_customers"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "appointments_customer_id_fkey"
+      columns: ["customer_id"]
+isOneToOne: false
       referencedRelation: "customers"
       referencedColumns: ["id"]
     },{
@@ -68,6 +80,12 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "services"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "appointments_vehicle_belongs_to_customer"
+      columns: ["vehicle_id","customer_id"]
+isOneToOne: false
+      referencedRelation: "vehicles"
+      referencedColumns: ["id","customer_id"]
     },{
       foreignKeyName: "appointments_vehicle_id_fkey"
       columns: ["vehicle_id"]
@@ -134,6 +152,12 @@ isOneToOne: false
       foreignKeyName: "enquiries_customer_id_fkey"
       columns: ["customer_id"]
 isOneToOne: false
+      referencedRelation: "admin_customers"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "enquiries_customer_id_fkey"
+      columns: ["customer_id"]
+isOneToOne: false
       referencedRelation: "customers"
       referencedColumns: ["id"]
     }
@@ -167,6 +191,12 @@ isOneToOne: false
       columns: ["created_by"]
 isOneToOne: false
       referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "follow_up_tasks_customer_id_fkey"
+      columns: ["customer_id"]
+isOneToOne: false
+      referencedRelation: "admin_customers"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "follow_up_tasks_customer_id_fkey"
@@ -226,6 +256,12 @@ isOneToOne: false
       foreignKeyName: "vehicles_customer_id_fkey"
       columns: ["customer_id"]
 isOneToOne: false
+      referencedRelation: "admin_customers"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "vehicles_customer_id_fkey"
+      columns: ["customer_id"]
+isOneToOne: false
       referencedRelation: "customers"
       referencedColumns: ["id"]
     }
@@ -243,6 +279,12 @@ isOneToOne: false
       foreignKeyName: "appointments_customer_id_fkey"
       columns: ["customer_id"]
 isOneToOne: false
+      referencedRelation: "admin_customers"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "appointments_customer_id_fkey"
+      columns: ["customer_id"]
+isOneToOne: false
       referencedRelation: "customers"
       referencedColumns: ["id"]
     },{
@@ -252,12 +294,26 @@ isOneToOne: false
       referencedRelation: "services"
       referencedColumns: ["id"]
     },{
+      foreignKeyName: "appointments_vehicle_belongs_to_customer"
+      columns: ["vehicle_id","customer_id"]
+isOneToOne: false
+      referencedRelation: "vehicles"
+      referencedColumns: ["id","customer_id"]
+    },{
       foreignKeyName: "appointments_vehicle_id_fkey"
       columns: ["vehicle_id"]
 isOneToOne: false
       referencedRelation: "vehicles"
       referencedColumns: ["id"]
     }
+                  ]
+                },"admin_customers": {
+                  Row: {
+                    "appointment_count": number | null,"created_at": string,"email": string | null,"email_normalized": string | null,"full_name": string,"id": string,"last_requested_at": string | null,"open_appointment_count": number | null,"phone": string | null,"phone_normalized": string | null,"registrations": string | null,"updated_at": string,"vehicle_count": number | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    
                   ]
                 }
           }
@@ -273,6 +329,9 @@ isOneToOne: false
                            },
 "propose_appointment_time":
 { Args: { "p_appointment_id": string,"p_date": string,"p_duration_minutes"?: number,"p_message"?: string,"p_time": string }; Returns: undefined
+                           },
+"set_appointment_vehicle":
+{ Args: { "p_appointment_id": string,"p_vehicle_id": string }; Returns: undefined
                            },
 "submit_appointment_request":
 { Args: { "p_additional_notes"?: string,"p_alternative_date"?: string,"p_alternative_time"?: string,"p_client_fingerprint"?: string,"p_description": string,"p_email": string,"p_full_name": string,"p_phone": string,"p_preferred_date": string,"p_preferred_time": string,"p_registration_number": string,"p_service_id": string,"p_vehicle_information"?: string,"p_vehicle_make": string,"p_vehicle_model": string,"p_vehicle_year": number }; Returns: string
