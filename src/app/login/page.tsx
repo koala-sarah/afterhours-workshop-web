@@ -27,7 +27,7 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
           </Link>
           <h1 className="text-h3">Admin sign in</h1>
         </div>
-        <Suspense fallback={<LoginForm />}>
+        <Suspense fallback={<LoginForm disabled />}>
           <LoginContent searchParams={searchParams} />
         </Suspense>
       </div>

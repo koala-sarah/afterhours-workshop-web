@@ -154,6 +154,12 @@ isOneToOne: false
       foreignKeyName: "follow_up_tasks_appointment_id_fkey"
       columns: ["appointment_id"]
 isOneToOne: false
+      referencedRelation: "admin_appointments"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "follow_up_tasks_appointment_id_fkey"
+      columns: ["appointment_id"]
+isOneToOne: false
       referencedRelation: "appointments"
       referencedColumns: ["id"]
     },{
@@ -227,14 +233,55 @@ isOneToOne: false
                 }
           }
           Views: {
-            [_ in never]: never
+            "admin_appointments": {
+                  Row: {
+                    "alternative_date": string | null,"alternative_time": string | null,"created_at": string,"customer_email": string | null,"customer_id": string,"customer_name": string,"customer_phone": string | null,"email_normalized": string | null,"id": string,"phone_normalized": string | null,"preferred_date": string,"preferred_time": string,"proposed_end": string | null,"proposed_start": string | null,"registration_normalized": string | null,"registration_number": string | null,"scheduled_end": string | null,"scheduled_start": string | null,"service_id": string,"service_name": string,"source": Database["public"]['Enums']["request_source"],"status": Database["public"]['Enums']["appointment_status"],"vehicle_id": string | null,"vehicle_make": string | null,"vehicle_model": string | null,"vehicle_year": number | null
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    {
+      foreignKeyName: "appointments_customer_id_fkey"
+      columns: ["customer_id"]
+isOneToOne: false
+      referencedRelation: "customers"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "appointments_service_id_fkey"
+      columns: ["service_id"]
+isOneToOne: false
+      referencedRelation: "services"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "appointments_vehicle_id_fkey"
+      columns: ["vehicle_id"]
+isOneToOne: false
+      referencedRelation: "vehicles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                }
           }
           Functions: {
-            "submit_appointment_request":
+            "add_appointment_note":
+{ Args: { "p_appointment_id": string,"p_note": string }; Returns: undefined
+                           },
+"approve_appointment":
+{ Args: { "p_appointment_id": string,"p_date": string,"p_duration_minutes"?: number,"p_note"?: string,"p_time": string }; Returns: undefined
+                           },
+"decline_appointment":
+{ Args: { "p_appointment_id": string,"p_reason"?: string }; Returns: undefined
+                           },
+"propose_appointment_time":
+{ Args: { "p_appointment_id": string,"p_date": string,"p_duration_minutes"?: number,"p_message"?: string,"p_time": string }; Returns: undefined
+                           },
+"submit_appointment_request":
 { Args: { "p_additional_notes"?: string,"p_alternative_date"?: string,"p_alternative_time"?: string,"p_client_fingerprint"?: string,"p_description": string,"p_email": string,"p_full_name": string,"p_phone": string,"p_preferred_date": string,"p_preferred_time": string,"p_registration_number": string,"p_service_id": string,"p_vehicle_information"?: string,"p_vehicle_make": string,"p_vehicle_model": string,"p_vehicle_year": number }; Returns: string
                            },
 "submit_enquiry":
 { Args: { "p_client_fingerprint"?: string,"p_email": string,"p_full_name": string,"p_message": string,"p_phone"?: string,"p_subject"?: string }; Returns: string
+                           },
+"update_appointment_status":
+{ Args: { "p_appointment_id": string,"p_reason"?: string,"p_status": Database["public"]['Enums']["appointment_status"] }; Returns: undefined
                            }
           }
           Enums: {
