@@ -80,6 +80,11 @@ Errors are raised with SQLSTATE `P0001` and one of these messages, which the app
    npm run db:push                   # applies them in order
    ```
    `db push` records what has run in `supabase_migrations.schema_migrations`, so running it again only applies new files. It does **not** run `seed.sql`.
+
+   Without `login`/`link`, you can push straight to the connection string. Use the **session pooler** (port 5432), not the transaction pooler (6543), for schema changes:
+   ```bash
+   npx supabase db push --db-url "postgresql://postgres.<ref>:<password>@<pooler-host>:5432/postgres"
+   ```
 4. Copy the keys into `.env.local` (see `.env.example`): Project URL, publishable key and secret key.
 
 ### B. Local Supabase (needs Docker Desktop)
