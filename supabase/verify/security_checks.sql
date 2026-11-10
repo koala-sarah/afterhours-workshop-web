@@ -113,7 +113,39 @@ begin
     raise exception 'FAIL: anon should see 7 business-hours rows';
   end if;
 
-  -- Can submit a booking request.
+  -- Cannot call the submission functions directly (server only).
+  begin
+    perform public.submit_enquiry('X', 'x@example.com', 'Hello');
+    raise exception 'FAIL: anon can call submit_enquiry directly';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.submit_appointment_request(
+      'X', 'x@example.com', '0211234567', 'Mazda', 'MX-5', 2005, 'ABC123',
+      v_service, 'x', v_day, '18:00'
+    );
+    raise exception 'FAIL: anon can call submit_appointment_request directly';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+
+reset role;
+
+-- -----------------------------------------------------------------------------
+-- 1b. Website server (service_role) submitting on behalf of visitors
+-- -----------------------------------------------------------------------------
+set local role service_role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', true);
+
+do $$
+declare
+  v_id uuid;
+  v_id2 uuid;
+  i integer;
+  v_day date := current_setting('test.day')::date;
+  v_service uuid := current_setting('test.service')::uuid;
+begin
+  -- A booking request.
   v_id := public.submit_appointment_request(
     p_full_name => 'Test Customer',
     p_email => 'Test.Customer@Example.com',
@@ -125,7 +157,8 @@ begin
     p_service_id => v_service,
     p_description => 'Brake check',
     p_preferred_date => v_day,
-    p_preferred_time => '18:00'
+    p_preferred_time => '18:00',
+    p_client_fingerprint => 'fingerprint-aaaaaaaaaaaaaaaa'
   );
   if v_id is null then raise exception 'FAIL: booking request returned no id'; end if;
 
@@ -180,6 +213,25 @@ begin
   v_id := public.submit_enquiry('Test Customer', 'test.customer@example.com', 'Do you service rotary engines?');
   v_id2 := public.submit_enquiry('Test Customer', 'test.customer@example.com', 'Do you service rotary engines?');
   if v_id <> v_id2 then raise exception 'FAIL: double-submitted enquiry created a second row'; end if;
+
+  -- Per-client throttle: 5 enquiries per 10 minutes from one fingerprint
+  -- (different people, so the per-customer limit is not what triggers).
+  for i in 1..5 loop
+    perform public.submit_enquiry(
+      'Spam ' || i, 'spam' || i || '@example.com', 'Message ' || i,
+      p_client_fingerprint => 'fingerprint-bbbbbbbbbbbbbbbb'
+    );
+  end loop;
+  begin
+    perform public.submit_enquiry('Spam 6', 'spam6@example.com', 'Message 6',
+      p_client_fingerprint => 'fingerprint-bbbbbbbbbbbbbbbb');
+    raise exception 'FAIL: 6th submission from one client was accepted';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'too_many_requests' then raise exception 'FAIL: expected too_many_requests, got %', sqlerrm; end if;
+  end;
+  -- Another client is not affected.
+  perform public.submit_enquiry('Other', 'other.client@example.com', 'Hello',
+    p_client_fingerprint => 'fingerprint-cccccccccccccccc');
 end $$;
 
 reset role;
@@ -332,8 +384,8 @@ reset role;
 -- -----------------------------------------------------------------------------
 -- 4. Approved slot is no longer offered to other customers
 -- -----------------------------------------------------------------------------
-set local role anon;
-select set_config('request.jwt.claims', '{"role":"anon"}', true);
+set local role service_role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', true);
 
 do $$
 begin

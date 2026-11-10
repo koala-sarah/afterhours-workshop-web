@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Container } from "@/components/layout/container";
 import { Section } from "@/components/layout/section";
 import { ContactForm } from "@/components/site/contact-form";
+import { EmailText } from "@/components/site/email-text";
 import { SiteHeader } from "@/components/site/site-header";
 import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
@@ -53,8 +54,8 @@ export default function ContactPage() {
               <div className="space-y-1">
                 <dt className="text-body-sm">CONTACT</dt>
                 <dd className="text-body-lg">
-                  <a href={`mailto:${contact.email}`} className="[overflow-wrap:anywhere] hover:underline">
-                    {contact.email}
+                  <a href={`mailto:${contact.email}`} className="break-words hover:underline">
+                    <EmailText email={contact.email} />
                   </a>
                   <br />
                   <a href={contact.phoneHref} className="hover:underline">

@@ -1,6 +1,8 @@
 import { Container } from "@/components/layout/container";
 import { siteConfig } from "@/config/site";
 
+import { EmailText } from "./email-text";
+
 /** Black footer used on every page of the existing site: title, map, location, contact. */
 export function SiteFooter() {
   const { contact } = siteConfig;
@@ -33,8 +35,8 @@ export function SiteFooter() {
           <div className="space-y-4 md:pt-[3.4vw]">
             <h2 className="font-body text-body-sm font-semibold">CONTACT</h2>
             <p className="text-body-lg">
-              <a href={`mailto:${contact.email}`} className="[overflow-wrap:anywhere] hover:underline">
-                {contact.email}
+              <a href={`mailto:${contact.email}`} className="break-words hover:underline">
+                <EmailText email={contact.email} />
               </a>
               <br />
               <a href={contact.phoneHref} className="hover:underline">
