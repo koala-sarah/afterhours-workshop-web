@@ -24,6 +24,8 @@ const buttonVariants = cva(
       size: {
         // Squarespace primary button: 1rem text, 1.2em x 2em padding, line-height 1.2.
         brand: "h-auto gap-2 px-[2em] py-[1.2em] text-base leading-[1.2]",
+        // Larger call-to-action buttons on the existing site (Learn more / Book now: ~66px tall).
+        "brand-lg": "h-auto gap-2 px-[2.5em] py-[1.48em] text-base leading-[1.2]",
         default:
           "h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
         xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",

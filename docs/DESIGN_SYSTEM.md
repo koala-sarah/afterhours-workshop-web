@@ -30,7 +30,7 @@ Wrap content in `<Section theme="…">` (or `data-section="…"`). Text, heading
 
 | Role | Font | Details |
 |---|---|---|
-| Headings, site title | **Archivo Black** (Google Fonts) | 400, uppercase, letter-spacing −0.02em, line-height 1.2 |
+| Headings, site title | **Archivo Black** (Google Fonts) | 400, uppercase, letter-spacing −0.02em; line-height `1.2 × (1 + (1 − size)/25)`: h1 1.056, h2 1.114, h3 1.142, h4 1.171 |
 | Body, nav, buttons, forms | **Space Grotesk** (Google Fonts) | 600, line-height 1.5 |
 
 Both fonts are confirmed in the existing site's CSS, so no substitutes were needed. They're loaded with `next/font` (self-hosted).
@@ -42,13 +42,15 @@ Both fonts are confirmed in the existing site's CSS, so no substitutes were need
 | `text-h3` | 2.2rem (fluid) |
 | `text-h4` | 1.6rem (fluid) |
 | `text-site-title` | 1.5rem |
-| `text-body-lg` / `text-body` / `text-body-sm` | 1.4rem / 1rem / 0.9rem |
+| `text-body-lg` / `text-body` / `text-body-sm` | 1.4rem (fluid) / 1rem / 0.9rem (fluid) |
+
+Most paragraphs on the existing site use the **normal** size (`text-body`, the default), including hero copy and service cards.
 
 `h1`–`h4` get the heading font, uppercase and the size automatically.
 
 ## Buttons
 
-`<Button variant="brand" size="brand">`: pill shape (`rounded-full`), Space Grotesk 600 uppercase, 1rem text, padding 1.2em × 2em, no border. Colours come from the section theme. The stock shadcn variants are kept for the admin area.
+`<Button variant="brand" size="brand">` (form buttons, ~59px tall) or `size="brand-lg"` (call-to-action buttons such as Learn more / Book now, ~66px tall): pill shape (`rounded-full`), Space Grotesk 600 uppercase, 1rem text, padding 1.2em × 2em, no border. Colours come from the section theme. The stock shadcn variants are kept for the admin area.
 
 ## Forms
 
@@ -68,7 +70,7 @@ Both fonts are confirmed in the existing site's CSS, so no substitutes were need
 | `gap-card-gap` | 10px | gap between service cards (screenshots) |
 | `py-header-y` | 2vw | header vertical padding |
 
-Use `<Container>` for width and gutters, and `<Section>` for the coloured band and vertical padding.
+Use `<Container>` for width and gutters (the 1400px limit applies inside the gutters), and `<Section>` for the coloured band and vertical padding.
 
 ## Cards and images
 
