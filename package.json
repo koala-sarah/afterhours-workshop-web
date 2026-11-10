@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "db:start": "supabase start",
+    "db:reset": "supabase db reset",
+    "db:push": "supabase db push",
+    "db:new": "supabase migration new"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -32,6 +36,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "shadcn": "^4.23.0",
+    "supabase": "^3.1.0",
     "tailwindcss": "4.3.3",
     "typescript": "^5"
   }
