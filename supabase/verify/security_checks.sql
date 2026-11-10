@@ -25,7 +25,9 @@ begin
       where id in ('00000000-0000-4000-8000-00000000a001', '00000000-0000-4000-8000-00000000a002')) <> 2 then
     raise exception 'FAIL: profiles were not created for new auth users';
   end if;
-  if exists (select 1 from public.profiles where role <> 'USER') then
+  if exists (select 1 from public.profiles
+             where id in ('00000000-0000-4000-8000-00000000a001', '00000000-0000-4000-8000-00000000a002')
+               and role <> 'USER') then
     raise exception 'FAIL: new profiles must default to USER';
   end if;
 end $$;
@@ -309,7 +311,7 @@ begin
   if (select count(*) from public.appointments where customer_id = v_customer) <> 2 then
     raise exception 'FAIL: expected 2 appointment requests';
   end if;
-  if exists (select 1 from public.appointments where status <> 'PENDING') then
+  if exists (select 1 from public.appointments where customer_id = v_customer and status <> 'PENDING') then
     raise exception 'FAIL: new requests must be PENDING';
   end if;
   if (select count(*) from public.enquiries where customer_id = v_customer) <> 1 then
@@ -397,6 +399,143 @@ begin
   raise exception 'FAIL: request overlapping an approved booking was accepted';
 exception when sqlstate 'P0001' then
   if sqlerrm <> 'slot_unavailable' then raise exception 'FAIL: expected slot_unavailable, got %', sqlerrm; end if;
+end $$;
+
+reset role;
+
+-- -----------------------------------------------------------------------------
+-- 5. Appointment management (approve / decline / propose / status / notes)
+-- -----------------------------------------------------------------------------
+set local role authenticated;
+select set_config('request.jwt.claims',
+  '{"role":"authenticated","sub":"00000000-0000-4000-8000-00000000a001"}', true);
+
+do $$
+declare
+  v_first uuid;
+  v_second uuid;
+  v_day date := current_setting('test.day')::date;
+  v_admin uuid := '00000000-0000-4000-8000-00000000a001';
+begin
+  select a.id into v_first from public.appointments a join public.customers c on c.id = a.customer_id
+  where c.email_normalized = 'test.customer@example.com' and a.preferred_time = '18:00';
+  select a.id into v_second from public.appointments a join public.customers c on c.id = a.customer_id
+  where c.email_normalized = 'test.customer@example.com' and a.preferred_time = '19:00';
+
+  -- The list view works for admins.
+  if (select count(*) from public.admin_appointments where email_normalized = 'test.customer@example.com') <> 2 then
+    raise exception 'FAIL: admin_appointments view should show 2 rows';
+  end if;
+
+  -- Approving a slot that overlaps an approved booking is refused (18:00-19:00 is taken).
+  begin
+    perform public.approve_appointment(v_second, v_day, '18:30');
+    raise exception 'FAIL: overlapping approval was accepted';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'slot_conflict' then raise exception 'FAIL: expected slot_conflict, got %', sqlerrm; end if;
+  end;
+
+  -- Approving a free slot records time, admin and activity (with the note).
+  perform public.approve_appointment(v_second, v_day, '19:00', null, 'Confirmed by phone');
+  if not exists (select 1 from public.appointments where id = v_second and status = 'APPROVED'
+                 and approved_by = v_admin and approved_at is not null
+                 and scheduled_end - scheduled_start = interval '60 minutes') then
+    raise exception 'FAIL: approval did not record slot / admin / timestamp';
+  end if;
+  if not exists (select 1 from public.activities where related_id = v_second
+                 and activity_type = 'appointment.status_changed' and created_by = v_admin
+                 and description like 'Appointment approved for % - Confirmed by phone') then
+    raise exception 'FAIL: approval activity missing or without note';
+  end if;
+
+  -- The conflict check also applies to a direct UPDATE (no bypass).
+  begin
+    update public.appointments
+    set scheduled_start = scheduled_start - interval '30 minutes',
+        scheduled_end = scheduled_end - interval '30 minutes'
+    where id = v_second;
+    raise exception 'FAIL: direct update into an overlapping slot was accepted';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'slot_conflict' then raise exception 'FAIL: expected slot_conflict on update, got %', sqlerrm; end if;
+  end;
+
+  -- Internal note.
+  perform public.add_appointment_note(v_second, 'Customer will drop off keys');
+  if not exists (select 1 from public.activities where related_id = v_second
+                 and activity_type = 'appointment.note' and created_by = v_admin) then
+    raise exception 'FAIL: note not recorded';
+  end if;
+
+  -- Status changes follow the allowed transitions.
+  perform public.update_appointment_status(v_first, 'COMPLETED');
+  begin
+    perform public.update_appointment_status(v_first, 'PENDING');
+    raise exception 'FAIL: COMPLETED -> PENDING was allowed';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'invalid_transition' then raise exception 'FAIL: expected invalid_transition, got %', sqlerrm; end if;
+  end;
+  begin
+    update public.appointments set status = 'DECLINED' where id = v_first;
+    raise exception 'FAIL: direct COMPLETED -> DECLINED was allowed';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'invalid_transition' then raise exception 'FAIL: expected invalid_transition, got %', sqlerrm; end if;
+  end;
+
+  -- Propose a different time for the approved booking, then cancel it.
+  perform public.propose_appointment_time(v_second, v_day, '20:00', null, 'Can you come at 8?');
+  if not exists (select 1 from public.appointments where id = v_second
+                 and status = 'RESCHEDULE_REQUESTED' and proposed_start is not null) then
+    raise exception 'FAIL: proposal not stored';
+  end if;
+  perform public.update_appointment_status(v_second, 'CANCELLED', 'Customer cancelled');
+  if not exists (select 1 from public.activities where related_id = v_second
+                 and description = 'Appointment cancelled - Customer cancelled') then
+    raise exception 'FAIL: cancellation activity missing';
+  end if;
+end $$;
+
+reset role;
+
+set local role authenticated;
+select set_config('request.jwt.claims',
+  '{"role":"authenticated","sub":"00000000-0000-4000-8000-00000000a002"}', true);
+
+do $$
+begin
+  if (select count(*) from public.admin_appointments) <> 0 then
+    raise exception 'FAIL: non-admin can see admin_appointments';
+  end if;
+  begin
+    perform public.approve_appointment(gen_random_uuid(), current_date + 7, '18:00');
+    raise exception 'FAIL: non-admin could call approve_appointment';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'forbidden' then raise exception 'FAIL: expected forbidden, got %', sqlerrm; end if;
+  end;
+  begin
+    perform public.decline_appointment(gen_random_uuid(), 'x');
+    raise exception 'FAIL: non-admin could call decline_appointment';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'forbidden' then raise exception 'FAIL: expected forbidden, got %', sqlerrm; end if;
+  end;
+end $$;
+
+reset role;
+
+set local role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+
+do $$
+begin
+  begin
+    perform public.approve_appointment(gen_random_uuid(), current_date + 7, '18:00');
+    raise exception 'FAIL: anon could call approve_appointment';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform 1 from public.admin_appointments limit 1;
+    raise exception 'FAIL: anon can read admin_appointments';
+  exception when insufficient_privilege then null;
+  end;
 end $$;
 
 reset role;

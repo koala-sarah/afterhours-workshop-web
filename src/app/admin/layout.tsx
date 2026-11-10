@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { siteConfig } from "@/config/site";
 
-import { AdminNav } from "./admin-nav";
+import { AdminNav, AdminNavList } from "./admin-nav";
 import { AdminUserMenu } from "./admin-user-menu";
 
 export const metadata: Metadata = {
@@ -30,7 +30,9 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
             </span>
           </Link>
         </div>
-        <AdminNav />
+        <Suspense fallback={<AdminNavList pathname={null} />}>
+          <AdminNav />
+        </Suspense>
         <div className="mt-auto">
           <Suspense fallback={<div className="h-16" aria-hidden />}>
             <AdminUserMenu />

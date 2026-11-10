@@ -11,6 +11,7 @@ Supabase Postgres 17. Everything is defined in version-controlled migrations in 
 | `…0500_activity_and_follow_ups.sql` | Activity history and enquiry → follow-up automation |
 | `…0600_reference_data.sql` | Services, business hours, settings (needed in production) |
 | `…0700_server_only_submissions.sql` | Submit functions callable by the server only; per-client throttling |
+| `…0800_appointment_management.sql` | `admin_appointments` view, approval guard trigger, admin appointment functions |
 
 `supabase/seed.sql` adds one sample enquiry for **local development only**.
 
@@ -68,6 +69,33 @@ Errors are raised with SQLSTATE `P0001` and one of these messages, which the app
 Throttling: max 5 submissions per 10 minutes and 20 per day per client per form, keyed on `p_client_fingerprint` (an HMAC of the visitor's IP computed by the server; the raw IP is never stored). Entries older than a day are deleted automatically.
 
 `invalid_name`, `invalid_email`, `invalid_phone`, `invalid_vehicle`, `invalid_service`, `invalid_description`, `invalid_message`, `invalid_date`, `invalid_input`, `past_date`, `closed_day`, `outside_hours`, `slot_unavailable`, `duplicate_request`, `too_many_requests` (more than 5 requests per customer per hour, or the per-client throttle above)
+
+## Admin appointment management
+
+Admin-only functions (`SECURITY INVOKER`, so RLS still applies; each checks `is_admin()` first and locks the row):
+
+| Function | Does |
+|---|---|
+| `approve_appointment(id, date, time, duration?, note?)` | `PENDING`/`RESCHEDULE_REQUESTED` → `APPROVED` with a confirmed slot (local Pacific/Auckland date + time) |
+| `decline_appointment(id, reason?)` | → `DECLINED` |
+| `propose_appointment_time(id, date, time, duration?, message?)` | → `RESCHEDULE_REQUESTED` with a proposed slot (must be free) |
+| `update_appointment_status(id, CANCELLED / COMPLETED / PENDING, reason?)` | Cancel, mark completed, reopen |
+| `add_appointment_note(id, note)` | Internal note, stored in the activity history with the author |
+
+A `BEFORE UPDATE` trigger on `appointments` applies to **every** update path (these functions or a direct `UPDATE`):
+
+- **Allowed transitions only:**
+  - `PENDING` → approved, declined, new time proposed, cancelled
+  - `RESCHEDULE_REQUESTED` → approved, declined, cancelled, pending
+  - `APPROVED` → completed, cancelled, new time proposed
+  - `DECLINED` / `CANCELLED` → pending
+  - `COMPLETED` is final.
+- **Conflict check on approval:** fewer than `max_concurrent_appointments` approved bookings may overlap the slot. Approvals are serialised with an advisory lock, so two admins can't double-book.
+- **Approval record:** `approved_at` and `approved_by` (the signed-in admin) are set automatically.
+
+Every status change is written to `activities` with a readable description (e.g. "Appointment approved for Mon 16 Nov 2026, 18:00 - Confirmed by phone"), the admin's reason and the slot.
+
+Extra error codes: `slot_conflict`, `invalid_transition`, `invalid_duration`, `not_found`, `forbidden`, `invalid_note`.
 
 ## Applying the migrations
 

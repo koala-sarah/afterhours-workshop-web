@@ -101,6 +101,17 @@ Supabase dashboard → **Authentication → Users → … → Send password reco
 | `requireAdmin()` in `src/lib/auth/dal.ts` | Called by every admin page and Server Action. Verifies the session JWT and checks the `ADMIN` role. |
 | Row Level Security (Supabase) | The database refuses internal data to anyone who is not an admin, whatever the app does. |
 
+## Managing appointments (admin)
+
+`/admin/appointments` lists every request: filter by status, and search by name, phone (any format), email or registration. Open a request to:
+
+- **Approve** at the preferred, alternative or any other time. The approved bookings for those days are shown first. Overlapping approvals are refused by the database.
+- **Suggest a different time**, then approve it once the customer agrees.
+- **Decline**, **cancel**, **mark completed** or **reopen**, with an optional reason.
+- **Add internal notes** and see the full history (who did what, when).
+
+Approval works without email. Customer emails are added in Stage 10.
+
 ## Booking requests
 
 `/appointments` has the booking request form (spec section 5). A submission is always a **request** (`PENDING`). The visitor sees *"Your appointment request has been received. We will contact you to confirm your appointment."* and only an admin can approve it.
