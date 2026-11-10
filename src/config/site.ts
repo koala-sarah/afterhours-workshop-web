@@ -3,7 +3,7 @@
  *
  * Every value here is copied from the existing website
  * (see docs/SITE_CONTENT.md). Do not add values that are not verified there.
- * Missing information (e.g. exact weekend hours) is intentionally left out.
+ * Unverified information is `null` and is not rendered until the owner confirms it.
  */
 export const siteConfig = {
   name: "Afterhours Workshop",
@@ -19,17 +19,31 @@ export const siteConfig = {
       city: "Auckland",
       postcode: "1072",
     },
+    /** Keyless Google Maps embed for the workshop address (the existing site's footer shows a map). */
+    mapEmbedUrl:
+      "https://www.google.com/maps/embed?origin=mfe&pb=!1m3!2m1!1s80+Morrin+Road,+St+Johns,+Auckland+1072!6i12",
   },
   hours: {
     weekdays: "5 PM to 10 PM",
     weekends: "All day",
+    /** Not stated on the existing site. */
+    weekendTimes: null,
+    publicHolidays: null,
+  },
+  about: {
+    /** "[Specialised areas]" placeholder on the existing site. */
+    specialisedAreas: null as string | null,
+    /** "[Mechanic's info]" placeholder on the existing site. */
+    mechanicInfo: null as string | null,
   },
   nav: [
     { label: "Home", href: "/" },
     { label: "About", href: "/about" },
     { label: "Services", href: "/services" },
     { label: "Appointments", href: "/appointments" },
+    { label: "Contact", href: "/contact" },
   ],
 } as const;
 
 export type SiteConfig = typeof siteConfig;
+export type NavHref = (typeof siteConfig.nav)[number]["href"];
