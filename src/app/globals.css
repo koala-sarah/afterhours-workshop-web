@@ -94,6 +94,8 @@
   --color-section-muted: var(--section-muted);
   --color-section-button: var(--section-button-bg);
   --color-section-button-foreground: var(--section-button-fg);
+  /* Form error text, readable on each section background */
+  --color-section-error: var(--section-error);
 
   /* shadcn/ui semantic colours mapped onto the brand palette */
   --color-background: var(--background);
@@ -180,6 +182,7 @@
   --section-muted: rgb(0 0 0 / 0.6);
   --section-button-bg: var(--color-ink);
   --section-button-fg: var(--color-paper);
+  --section-error: #b42318;
 }
 
 @media screen and (min-width: 768px), screen and (orientation: landscape) {
@@ -200,6 +203,7 @@
 
 /* "bright": steel background (Home hero, Contact us) */
 [data-section="bright"] {
+  --section-error: #b42318;
   --section-bg: var(--color-steel);
   --section-heading: var(--color-ink);
   --section-subheading: var(--color-ink);
@@ -211,6 +215,7 @@
 
 /* "light": butter background, olive headings (Services, About) */
 [data-section="light"] {
+  --section-error: #b42318;
   --section-bg: var(--color-butter);
   --section-heading: var(--color-olive);
   --section-subheading: var(--color-ink);
@@ -222,6 +227,7 @@
 
 /* "dark": olive background, white text (Appointments page) */
 [data-section="dark"] {
+  --section-error: #ffb4ab;
   --section-bg: var(--color-olive);
   --section-heading: var(--color-paper);
   --section-subheading: var(--color-paper);
@@ -233,6 +239,7 @@
 
 /* "dark-bold": olive background, steel headings (Home "Schedule today") */
 [data-section="dark-bold"] {
+  --section-error: #ffb4ab;
   --section-bg: var(--color-olive);
   --section-heading: var(--color-steel);
   --section-subheading: var(--color-steel);
@@ -244,6 +251,7 @@
 
 /* "black": footer */
 [data-section="black"] {
+  --section-error: #ffb4ab;
   --section-bg: var(--color-ink);
   --section-heading: var(--color-paper);
   --section-subheading: var(--color-paper);

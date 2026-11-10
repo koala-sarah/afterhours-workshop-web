@@ -12,14 +12,16 @@ export function ServiceGrid({ services }: { services: Service[] }) {
     <div className="grid gap-x-card-gap gap-y-12 md:grid-cols-3">
       {services.map((service) => (
         <article key={service.slug}>
-          <div className="relative aspect-[1.035] overflow-hidden">
-            <Image
-              src={service.image.src}
-              alt={service.image.alt}
-              fill
-              sizes="(min-width: 768px) 30vw, 100vw"
-              className="object-cover"
-            />
+          <div className="relative aspect-[1.035] overflow-hidden bg-olive/20">
+            {service.image && (
+              <Image
+                src={service.image.src}
+                alt={service.image.alt}
+                fill
+                sizes="(min-width: 768px) 30vw, 100vw"
+                className="object-cover"
+              />
+            )}
           </div>
           <h3 className="mt-[3.2rem] text-h4 text-section-subheading">
             <Link

@@ -101,6 +101,12 @@ Supabase dashboard → **Authentication → Users → … → Send password reco
 | `requireAdmin()` in `src/lib/auth/dal.ts` | Called by every admin page and Server Action. Verifies the session JWT and checks the `ADMIN` role. |
 | Row Level Security (Supabase) | The database refuses internal data to anyone who is not an admin, whatever the app does. |
 
+## Booking requests
+
+`/appointments` has the booking request form (spec section 5). A submission is always a **request** (`PENDING`). The visitor sees *"Your appointment request has been received. We will contact you to confirm your appointment."* and only an admin can approve it.
+
+Protection, in order: hidden honeypot field and minimum fill time → Zod validation in the Server Action → database function (validation, customer de-duplication on normalised email/phone, vehicle reuse on normalised registration, past date / opening hours / approved-slot checks, duplicate-request block, per-customer and per-IP limits). The submit functions can only be called from the server.
+
 Other details:
 
 - Login errors don't reveal whether an email exists.

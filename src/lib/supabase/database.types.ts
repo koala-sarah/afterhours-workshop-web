@@ -231,10 +231,10 @@ isOneToOne: false
           }
           Functions: {
             "submit_appointment_request":
-{ Args: { "p_additional_notes"?: string,"p_alternative_date"?: string,"p_alternative_time"?: string,"p_description": string,"p_email": string,"p_full_name": string,"p_phone": string,"p_preferred_date": string,"p_preferred_time": string,"p_registration_number": string,"p_service_id": string,"p_vehicle_information"?: string,"p_vehicle_make": string,"p_vehicle_model": string,"p_vehicle_year": number }; Returns: string
+{ Args: { "p_additional_notes"?: string,"p_alternative_date"?: string,"p_alternative_time"?: string,"p_client_fingerprint"?: string,"p_description": string,"p_email": string,"p_full_name": string,"p_phone": string,"p_preferred_date": string,"p_preferred_time": string,"p_registration_number": string,"p_service_id": string,"p_vehicle_information"?: string,"p_vehicle_make": string,"p_vehicle_model": string,"p_vehicle_year": number }; Returns: string
                            },
 "submit_enquiry":
-{ Args: { "p_email": string,"p_full_name": string,"p_message": string,"p_phone"?: string,"p_subject"?: string }; Returns: string
+{ Args: { "p_client_fingerprint"?: string,"p_email": string,"p_full_name": string,"p_message": string,"p_phone"?: string,"p_subject"?: string }; Returns: string
                            }
           }
           Enums: {

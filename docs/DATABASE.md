@@ -10,6 +10,7 @@ Supabase Postgres 17. Everything is defined in version-controlled migrations in 
 | `…0400_public_submissions.sql` | `submit_appointment_request`, `submit_enquiry` (the only public write path) |
 | `…0500_activity_and_follow_ups.sql` | Activity history and enquiry → follow-up automation |
 | `…0600_reference_data.sql` | Services, business hours, settings (needed in production) |
+| `…0700_server_only_submissions.sql` | Submit functions callable by the server only; per-client throttling |
 
 `supabase/seed.sql` adds one sample enquiry for **local development only**.
 
@@ -39,16 +40,18 @@ Rules enforced by the database (not just the app):
 
 | Who | Can do |
 |---|---|
-| Website visitor (`anon`) | Read active services, business hours, booking settings. Call `submit_appointment_request` and `submit_enquiry`. **Nothing else**: no direct read or write on any internal table. |
+| Website visitor (`anon`) | Read active services, business hours, booking settings. **Nothing else**: no direct read or write on any internal table, and no direct calls to the submit functions. |
 | Signed-in user with role `USER` | Read their own profile and change their own name. No internal records. |
 | Signed-in `ADMIN` | Read and manage all internal records. Activity history is append-only. Cannot change roles through the API. |
-| `service_role` / secret key | Bypasses RLS. Server only, never in the browser. |
+| `service_role` / secret key | Bypasses RLS. Server only, never in the browser. The Next.js server uses it **only** to call `submit_appointment_request` / `submit_enquiry` after its own spam checks. |
 
 - RLS is enabled on all 10 tables, and access is decided by policies, not by hidden pages.
 - `TRUNCATE` (which ignores RLS) is revoked, and default privileges are changed so **future tables and functions start with no anon access**.
 - Helper functions live in the `private` schema, which the Data API does not expose.
 
 ### Public submission functions
+
+Callable only by `service_role`, i.e. from the website's Server Actions, so the app's spam checks (honeypot, minimum fill time, Zod validation) cannot be skipped by calling the API directly.
 
 Both run in one transaction and return only the new record's id. They validate input, reuse an existing customer (same normalised email; or same phone when that customer has no email on file), and log activity. `submit_enquiry` also creates a follow-up task.
 
@@ -62,7 +65,9 @@ Passing these checks never confirms anything: the request stays `PENDING` until 
 
 Errors are raised with SQLSTATE `P0001` and one of these messages, which the app maps to friendly text:
 
-`invalid_name`, `invalid_email`, `invalid_phone`, `invalid_vehicle`, `invalid_service`, `invalid_description`, `invalid_message`, `invalid_date`, `invalid_input`, `past_date`, `closed_day`, `outside_hours`, `slot_unavailable`, `duplicate_request`, `too_many_requests` (more than 5 requests per customer per hour)
+Throttling: max 5 submissions per 10 minutes and 20 per day per client per form, keyed on `p_client_fingerprint` (an HMAC of the visitor's IP computed by the server; the raw IP is never stored). Entries older than a day are deleted automatically.
+
+`invalid_name`, `invalid_email`, `invalid_phone`, `invalid_vehicle`, `invalid_service`, `invalid_description`, `invalid_message`, `invalid_date`, `invalid_input`, `past_date`, `closed_day`, `outside_hours`, `slot_unavailable`, `duplicate_request`, `too_many_requests` (more than 5 requests per customer per hour, or the per-client throttle above)
 
 ## Applying the migrations
 
