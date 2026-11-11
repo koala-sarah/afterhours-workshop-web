@@ -40,6 +40,9 @@ All quoted text is copied **verbatim** from the live site, including its origina
 | Address | 80 Morrin Road, St Johns, Auckland 1072 |
 | Email | info@afterhoursworkshop.co.nz |
 | Phone | (027) 770 - 0486 |
+| WhatsApp | 021 266 5208 (`+64 21 266 5208`). A different number from the phone line. Confirmed by the owner on 2026-11-11; not shown on the old site. |
+| SMS | 021 266 5208 for now (owner's choice on 2026-11-11). |
+| New-request notifications | info@afterhoursworkshop.co.nz (owner confirmed on 2026-11-11). |
 | Social media | None found |
 | Map embed | Google map of St Johns in the footer of every page (seen in `docs/design-reference/`) |
 
