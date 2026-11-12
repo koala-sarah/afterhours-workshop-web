@@ -1,12 +1,10 @@
 -- Local development seed (runs on `supabase db reset` only, never in production).
 -- Reference data (services, hours, settings) lives in the migrations.
 --
--- Sample records are created through the same public function the website uses,
--- so they follow the normal validation and automation path.
+-- Sample records are created through the same server-only function the website
+-- uses, so they follow the normal validation and automation path.
 
-select public.submit_enquiry(
-  p_full_name => 'Sample Customer',
-  p_email => 'sample.customer@example.com',
-  p_phone => '021 000 0000',
-  p_message => 'Sample enquiry for local development.'
+select public.submit_inbox_form(
+  p_kind => 'CONTACT_FORM',
+  p_answers => '{"contact":{"name":"Sample Customer","email":"sample.customer@example.com","phone":"021 000 0000"},"message":"Sample message for local development."}'::jsonb
 );

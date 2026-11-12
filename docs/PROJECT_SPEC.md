@@ -133,9 +133,9 @@ Existing (Builds 3–7): profiles, customers, vehicles, services, enquiries (leg
 New (Build 9):
 
 - **Enums:** `inbox_channel` (WEB, PHONE, WHATSAPP, SMS, EMAIL), `inbox_status` (NEW, NEEDS_REPLY, DONE), `contact_method` (PHONE, WHATSAPP, SMS, EMAIL).
-- **inbox_items** (one card): customer_id (nullable, so future unknown callers fit), contact name/phone/phone_normalized/email snapshot, preferred_method, preferred_times, status, status_changed_at/by, last_entry_at, appointment_id, timestamps.
-- **inbox_entries** (each submission, message or call on a card): item_id, channel, kind (INTAKE, FORM, CONTACT_FORM, MESSAGE, CALL), summary, source_phone, external_id (unique per channel), answers (jsonb), flow_version, symptom_category, drivable, vehicle snapshot + vehicle_id, last_step, completed_at, legacy_enquiry_id.
-- **intake_sessions:** token_hash, fingerprint, current_step, answers, entry_id, turnstile_verified_at, expires_at. No direct access for anyone but server functions.
+- **inbox_items** (one card): customer_id (nullable, so future unknown callers fit), contact name/phone/phone_normalized/email snapshot, status, status_changed_at/by, last_entry_at, appointment_id, timestamps.
+- **inbox_entries** (each submission, message or call on a card): item_id, channel, kind (INTAKE, FORM, CONTACT_FORM, MESSAGE, CALL), summary, source_phone, external_id (unique per channel), answers (jsonb), flow_version, contact snapshot, symptom_category, drivable, vehicle snapshot + vehicle_id, preferred_method, preferred_times, message, last_step, completed_at, abandoned_at, legacy_enquiry_id. The `admin_inbox` view shows each card with its latest entry.
+- **private.intake_sessions:** token_hash, fingerprint, current_step, answers, entry_id, turnstile_verified_at, expires_at. No direct access for anyone but server functions.
 - **notifications:** kind, item, recipient, status (PENDING, SENT, FAILED, SKIPPED), attempts, last_error, sent_at.
 - **Changes:** `appointments.service_id` becomes optional and gains `inbox_item_id`; `activities.related_type` gains `INBOX_ITEM`; `follow_up_tasks` gains optional `inbox_item_id`.
 

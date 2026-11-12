@@ -318,9 +318,10 @@ begin
     raise exception 'FAIL: expected 1 enquiry';
   end if;
 
-  -- Automation: enquiry -> follow-up task, and activity history.
-  if (select count(*) from public.follow_up_tasks where customer_id = v_customer and enquiry_id is not null) <> 1 then
-    raise exception 'FAIL: enquiry did not create a follow-up task';
+  -- Enquiries are legacy: they no longer create follow-up tasks (the Inbox
+  -- replaces them). Activity history is still written.
+  if exists (select 1 from public.follow_up_tasks where customer_id = v_customer) then
+    raise exception 'FAIL: enquiry still creates a follow-up task';
   end if;
   if (select count(*) from public.activities where customer_id = v_customer and activity_type = 'appointment.requested') <> 2
      or (select count(*) from public.activities where customer_id = v_customer and activity_type = 'enquiry.received') <> 1
@@ -373,8 +374,10 @@ begin
   exception when insufficient_privilege then null;
   end;
 
-  -- Completing a task stamps completed_at automatically.
-  select id into v_task from public.follow_up_tasks where customer_id = v_customer limit 1;
+  -- Completing a task stamps completed_at automatically (table kept for later).
+  insert into public.follow_up_tasks (customer_id, title, due_at)
+  values (v_customer, 'Check back', now() + interval '1 day')
+  returning id into v_task;
   update public.follow_up_tasks set status = 'COMPLETED' where id = v_task;
   if (select completed_at from public.follow_up_tasks where id = v_task) is null then
     raise exception 'FAIL: completed_at not set';
@@ -677,6 +680,455 @@ begin
     raise exception 'FAIL: anon could call set_appointment_vehicle';
   exception when insufficient_privilege then null;
   end;
+end $$;
+
+reset role;
+
+-- -----------------------------------------------------------------------------
+-- 7. Inbox and chat intake
+-- -----------------------------------------------------------------------------
+
+-- 7a. Anonymous visitor: no access to the Inbox or the intake path.
+set local role anon;
+select set_config('request.jwt.claims', '{"role":"anon"}', true);
+
+do $$
+declare
+  t text;
+begin
+  foreach t in array array['inbox_items', 'inbox_entries', 'admin_inbox', 'notifications'] loop
+    begin
+      execute format('select 1 from public.%I limit 1', t);
+      raise exception 'FAIL: anon can read %', t;
+    exception when insufficient_privilege then null;
+    end;
+  end loop;
+  begin
+    perform 1 from private.intake_sessions limit 1;
+    raise exception 'FAIL: anon can read intake sessions';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.intake_start(repeat('a', 64));
+    raise exception 'FAIL: anon can call intake_start directly';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.intake_save_step(repeat('a', 64), 'contact', '{}'::jsonb);
+    raise exception 'FAIL: anon can call intake_save_step directly';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.submit_inbox_form('CONTACT_FORM', '{}'::jsonb);
+    raise exception 'FAIL: anon can call submit_inbox_form directly';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.claim_notifications(1);
+    raise exception 'FAIL: anon can claim notifications';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.run_intake_maintenance();
+    raise exception 'FAIL: anon can run maintenance';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.set_inbox_status(gen_random_uuid(), 'DONE');
+    raise exception 'FAIL: anon can call set_inbox_status';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.approve_from_inbox(gen_random_uuid(), current_date + 2, '19:00');
+    raise exception 'FAIL: anon can call approve_from_inbox';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+
+reset role;
+
+-- 7b. Website server: chat intake, saved at every step.
+-- Nobody, not even service_role, can read intake sessions directly; only the
+-- intake functions use them. Granted here for the assertions only (rolled back).
+grant select on private.intake_sessions to service_role;
+set local role service_role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', true);
+
+do $$
+declare
+  h1 text := repeat('1', 64);
+  h2 text := repeat('2', 64);
+  h3 text := repeat('3', 64);
+  h4 text := repeat('4', 64);
+  v_result jsonb;
+  v_entry public.inbox_entries;
+  v_item uuid;
+  v_id uuid;
+  v_id2 uuid;
+  i integer;
+begin
+  perform public.intake_start(h1, 'fp-intake-0000000001', 'v1');
+  perform public.intake_start(h1, 'fp-intake-0000000001', 'v1'); -- same cookie: no-op
+  if (select count(*) from private.intake_sessions where token_hash = h1) <> 1 then
+    raise exception 'FAIL: intake session not created once';
+  end if;
+
+  begin
+    perform public.intake_start('not-a-hash');
+    raise exception 'FAIL: bad token accepted';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'invalid_input' then raise exception 'FAIL: expected invalid_input, got %', sqlerrm; end if;
+  end;
+
+  -- Step 1 (no contact yet): saved on the session only.
+  v_result := public.intake_save_step(h1, 'symptom', '{"symptom":{"category":"brakes","text":"grinding noise"}}');
+  if (v_result ->> 'has_contact')::boolean then
+    raise exception 'FAIL: entry created before contact details';
+  end if;
+  if (select answers #>> '{symptom,category}' from private.intake_sessions where token_hash = h1) <> 'brakes' then
+    raise exception 'FAIL: step 1 not saved';
+  end if;
+
+  -- Invalid contact is refused.
+  begin
+    perform public.intake_save_step(h1, 'contact', '{"contact":{"name":"Kiri Tane","phone":"12"}}');
+    raise exception 'FAIL: invalid phone accepted';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'invalid_phone' then raise exception 'FAIL: expected invalid_phone, got %', sqlerrm; end if;
+  end;
+
+  -- Step 2 (contact): the Inbox entry exists from now on.
+  v_result := public.intake_save_step(h1, 'contact', '{"contact":{"name":"Kiri Tane","phone":"021 555 1234","email":null}}');
+  if not (v_result ->> 'entry_created')::boolean then
+    raise exception 'FAIL: entry not created at the contact step';
+  end if;
+  select e.* into v_entry from public.inbox_entries e
+  join private.intake_sessions s on s.entry_id = e.id where s.token_hash = h1;
+  if v_entry.kind <> 'INTAKE' or v_entry.channel <> 'WEB' or v_entry.symptom_category <> 'brakes'
+     or v_entry.contact_phone <> '021 555 1234' or v_entry.flow_version <> 'v1' then
+    raise exception 'FAIL: entry fields wrong after contact step';
+  end if;
+  if (select status from public.inbox_items where id = v_entry.item_id) <> 'NEW' then
+    raise exception 'FAIL: new card is not NEW';
+  end if;
+  if exists (select 1 from public.notifications where entry_id = v_entry.id) then
+    raise exception 'FAIL: notification queued before the request finished';
+  end if;
+
+  perform public.intake_save_step(h1, 'vehicle',
+    '{"vehicle":{"make":"Toyota","model":"Corolla","year":"2012","registration":"kir 123"}}');
+  perform public.intake_save_step(h1, 'details', '{"details":["when braking"]}');
+  perform public.intake_save_step(h1, 'drivable', '{"drivable":"NO"}');
+  v_result := public.intake_save_step(h1, 'reach',
+    '{"reach":{"method":"WHATSAPP","times":["Weekday evening","Saturday"]}}', true);
+
+  select * into v_entry from public.inbox_entries where id = v_entry.id;
+  if v_entry.vehicle_make <> 'Toyota' or v_entry.vehicle_year <> 2012 or v_entry.drivable <> 'NO'
+     or v_entry.preferred_method <> 'WHATSAPP' or v_entry.preferred_times <> array['Weekday evening', 'Saturday']
+     or v_entry.last_step <> 'reach' or v_entry.completed_at is null then
+    raise exception 'FAIL: answers not copied to the entry: %', row_to_json(v_entry);
+  end if;
+  -- Finished: linked to a customer and vehicle, one notification queued.
+  if (select customer_id from public.inbox_items where id = v_entry.item_id) is null
+     or v_entry.vehicle_id is null then
+    raise exception 'FAIL: finished request not linked to customer / vehicle';
+  end if;
+  if (select count(*) from public.notifications where entry_id = v_entry.id and kind = 'NEW_REQUEST') <> 1 then
+    raise exception 'FAIL: finished request did not queue one notification';
+  end if;
+
+  begin
+    perform public.intake_save_step(h1, 'reach', '{}');
+    raise exception 'FAIL: saved after completion';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'session_completed' then raise exception 'FAIL: expected session_completed, got %', sqlerrm; end if;
+  end;
+  begin
+    perform public.intake_save_step(repeat('9', 64), 'symptom', '{}');
+    raise exception 'FAIL: unknown session accepted';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'session_not_found' then raise exception 'FAIL: expected session_not_found, got %', sqlerrm; end if;
+  end;
+
+  -- Finishing without contact details is refused.
+  perform public.intake_start(h2, 'fp-intake-0000000002', 'v1');
+  begin
+    perform public.intake_save_step(h2, 'symptom', '{"symptom":{"category":null}}', true);
+    raise exception 'FAIL: finished without contact details';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'contact_required' then raise exception 'FAIL: expected contact_required, got %', sqlerrm; end if;
+  end;
+
+  -- Same phone (different format) while the card is open: same card, back to NEW.
+  v_item := v_entry.item_id;
+  update public.inbox_items set status = 'NEEDS_REPLY' where id = v_item;
+  perform public.intake_start(h3, 'fp-intake-0000000003', 'v1');
+  perform public.intake_save_step(h3, 'contact', '{"contact":{"name":"Kiri","phone":"+64 21 555 1234"}}');
+  if (select count(*) from public.inbox_items where phone_normalized = '0215551234') <> 1
+     or (select count(*) from public.inbox_entries where item_id = v_item) <> 2
+     or (select status from public.inbox_items where id = v_item) <> 'NEW' then
+    raise exception 'FAIL: same phone not grouped onto the open card';
+  end if;
+
+  -- The customer fixes a typo in their number: the card follows, nothing is left behind.
+  perform public.intake_start(h4, 'fp-intake-0000000004', 'v1');
+  perform public.intake_save_step(h4, 'contact', '{"contact":{"name":"Ana","phone":"022 111 1111"}}');
+  perform public.intake_save_step(h4, 'contact', '{"contact":{"name":"Ana","phone":"022 222 2222"}}');
+  if exists (select 1 from public.inbox_items where phone_normalized = '0221111111')
+     or (select count(*) from public.inbox_items where phone_normalized = '0222222222') <> 1 then
+    raise exception 'FAIL: corrected phone left a stray card';
+  end if;
+  -- ... and when the corrected number already has an open card, the entry moves there.
+  perform public.intake_save_step(h4, 'contact', '{"contact":{"name":"Ana","phone":"021 555 1234"}}');
+  if exists (select 1 from public.inbox_items where phone_normalized = '0222222222')
+     or (select count(*) from public.inbox_entries where item_id = v_item) <> 3 then
+    raise exception 'FAIL: entry not moved to the card with the corrected number';
+  end if;
+
+  -- Throttle: max 5 new sessions per 10 minutes per client.
+  begin
+    for i in 1..6 loop
+      perform public.intake_start(repeat(to_hex(i + 9), 64), 'fp-intake-spam-000000', 'v1');
+    end loop;
+    raise exception 'FAIL: intake start not throttled';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'too_many_requests' then raise exception 'FAIL: expected too_many_requests, got %', sqlerrm; end if;
+  end;
+
+  -- Forms: contact form (email only) and validation.
+  v_id := public.submit_inbox_form('CONTACT_FORM',
+    '{"contact":{"name":"Mere","email":"Mere@Example.com"},"message":"Do you do WOFs?"}', null, 'fp-form-000000000001');
+  v_id2 := public.submit_inbox_form('CONTACT_FORM',
+    '{"contact":{"name":"Mere","email":"Mere@Example.com"},"message":"Do you do WOFs?"}', null, 'fp-form-000000000001');
+  if v_id <> v_id2 then
+    raise exception 'FAIL: duplicate contact form created a second entry';
+  end if;
+  select * into v_entry from public.inbox_entries where id = v_id;
+  if v_entry.message <> 'Do you do WOFs?' or v_entry.completed_at is null
+     or (select count(*) from public.notifications where entry_id = v_id) <> 1
+     or (select customer_id from public.inbox_items where id = v_entry.item_id) is null then
+    raise exception 'FAIL: contact form entry incomplete';
+  end if;
+  begin
+    perform public.submit_inbox_form('CONTACT_FORM', '{"contact":{"name":"Mere","email":"mere@example.com"}}');
+    raise exception 'FAIL: contact form without a message accepted';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'invalid_message' then raise exception 'FAIL: expected invalid_message, got %', sqlerrm; end if;
+  end;
+  begin
+    perform public.submit_inbox_form('INTAKE', '{"contact":{"name":"Mere","email":"mere@example.com"}}');
+    raise exception 'FAIL: submit_inbox_form accepted kind INTAKE';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'invalid_kind' then raise exception 'FAIL: expected invalid_kind, got %', sqlerrm; end if;
+  end;
+
+  -- Notification sender: a claim takes a row once; finishing records the result.
+  select id into v_id from public.claim_notifications(1);
+  if v_id is null or (select attempts from public.notifications where id = v_id) <> 1 then
+    raise exception 'FAIL: notification not claimed';
+  end if;
+  if exists (select 1 from public.claim_notifications(50) where id = v_id) then
+    raise exception 'FAIL: claimed notification handed out twice';
+  end if;
+  perform public.finish_notification(v_id, 'SENT', null, array['info@example.com']);
+  if (select sent_at from public.notifications where id = v_id) is null then
+    raise exception 'FAIL: sent notification not recorded';
+  end if;
+end $$;
+
+reset role;
+
+-- 7c. Abandoned chat (time-travel the last activity, as the owner).
+alter table public.inbox_entries disable trigger inbox_entries_set_updated_at;
+alter table private.intake_sessions disable trigger intake_sessions_set_updated_at;
+update public.inbox_entries e set updated_at = now() - interval '2 hours'
+from private.intake_sessions s
+where s.entry_id = e.id and s.token_hash = repeat('3', 64);
+update private.intake_sessions set updated_at = now() - interval '2 hours' where token_hash = repeat('3', 64);
+alter table public.inbox_entries enable trigger inbox_entries_set_updated_at;
+alter table private.intake_sessions enable trigger intake_sessions_set_updated_at;
+
+set local role service_role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', true);
+
+do $$
+declare
+  v_result jsonb;
+  v_entry public.inbox_entries;
+begin
+  v_result := public.run_intake_maintenance();
+  if (v_result ->> 'abandoned')::integer <> 1 then
+    raise exception 'FAIL: expected 1 abandoned intake, got %', v_result;
+  end if;
+  select e.* into v_entry from public.inbox_entries e
+  join private.intake_sessions s on s.entry_id = e.id where s.token_hash = repeat('3', 64);
+  if v_entry.abandoned_at is null or v_entry.last_step <> 'contact' then
+    raise exception 'FAIL: abandoned step not recorded';
+  end if;
+  if (select count(*) from public.notifications where entry_id = v_entry.id and kind = 'ABANDONED_REQUEST') <> 1 then
+    raise exception 'FAIL: abandoned request did not queue a notification';
+  end if;
+  -- Running again changes nothing and never queues a second notification.
+  v_result := public.run_intake_maintenance();
+  if (v_result ->> 'abandoned')::integer <> 0
+     or (select count(*) from public.notifications where entry_id = v_entry.id) <> 1 then
+    raise exception 'FAIL: maintenance is not idempotent';
+  end if;
+end $$;
+
+reset role;
+revoke select on private.intake_sessions from service_role;
+
+-- 7d. Signed-in user who is NOT an admin.
+set local role authenticated;
+select set_config('request.jwt.claims',
+  '{"role":"authenticated","sub":"00000000-0000-4000-8000-00000000a002"}', true);
+
+do $$
+begin
+  if (select count(*) from public.admin_inbox) <> 0
+     or (select count(*) from public.inbox_items) <> 0
+     or (select count(*) from public.inbox_entries) <> 0
+     or (select count(*) from public.notifications) <> 0 then
+    raise exception 'FAIL: non-admin can see the Inbox';
+  end if;
+  begin
+    perform public.set_inbox_status((select gen_random_uuid()), 'DONE');
+    raise exception 'FAIL: non-admin could call set_inbox_status';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'forbidden' then raise exception 'FAIL: expected forbidden, got %', sqlerrm; end if;
+  end;
+  begin
+    perform public.approve_from_inbox(gen_random_uuid(), current_date + 2, '19:00');
+    raise exception 'FAIL: non-admin could call approve_from_inbox';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'forbidden' then raise exception 'FAIL: expected forbidden, got %', sqlerrm; end if;
+  end;
+  begin
+    perform public.intake_save_step(repeat('1', 64), 'contact', '{}'::jsonb);
+    raise exception 'FAIL: signed-in user can call intake_save_step';
+  exception when insufficient_privilege then null;
+  end;
+end $$;
+
+reset role;
+
+-- 7e. Admin: one-tap actions and booking approval from a card.
+set local role authenticated;
+select set_config('request.jwt.claims',
+  '{"role":"authenticated","sub":"00000000-0000-4000-8000-00000000a001"}', true);
+
+do $$
+declare
+  v_admin uuid := '00000000-0000-4000-8000-00000000a001';
+  v_day date := current_setting('test.day')::date;
+  v_item uuid;
+  v_other uuid;
+  v_appt uuid;
+  v_card record;
+begin
+  select * into v_card from public.admin_inbox where phone_normalized = '0215551234';
+  if v_card.id is null or v_card.entry_count <> 3 or v_card.status <> 'NEW' then
+    raise exception 'FAIL: admin_inbox card wrong: %', row_to_json(v_card);
+  end if;
+  v_item := v_card.id;
+
+  -- No direct writes, even for admins.
+  begin
+    update public.inbox_items set status = 'DONE' where id = v_item;
+    raise exception 'FAIL: admin updated inbox_items directly';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    delete from public.inbox_entries;
+    raise exception 'FAIL: admin deleted inbox entries directly';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    insert into public.inbox_items (contact_phone) values ('021 000 0000');
+    raise exception 'FAIL: admin inserted an inbox item directly';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform 1 from private.intake_sessions limit 1;
+    raise exception 'FAIL: admin can read intake sessions';
+  exception when insufficient_privilege then null;
+  end;
+
+  -- One-tap WhatsApp: logged with the admin, NEW -> NEEDS_REPLY.
+  perform public.log_inbox_contact(v_item, 'WHATSAPP');
+  if (select status from public.inbox_items where id = v_item) <> 'NEEDS_REPLY'
+     or (select status_changed_by from public.inbox_items where id = v_item) <> v_admin then
+    raise exception 'FAIL: contact tap did not move the card to NEEDS_REPLY';
+  end if;
+  if not exists (select 1 from public.activities where related_type = 'INBOX_ITEM' and related_id = v_item
+                 and activity_type = 'inbox.contacted' and created_by = v_admin) then
+    raise exception 'FAIL: contact tap not logged';
+  end if;
+
+  perform public.add_inbox_note(v_item, 'Called, will confirm tonight');
+  begin
+    perform public.add_inbox_note(v_item, '   ');
+    raise exception 'FAIL: empty note accepted';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'invalid_note' then raise exception 'FAIL: expected invalid_note, got %', sqlerrm; end if;
+  end;
+
+  -- Past times are refused.
+  begin
+    perform public.approve_from_inbox(v_item, current_date - 1, '19:00');
+    raise exception 'FAIL: booking approved in the past';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'past_date' then raise exception 'FAIL: expected past_date, got %', sqlerrm; end if;
+  end;
+
+  -- Approve booking: appointment created + approved, card DONE. Uses the
+  -- finished chat entry (the latest entry has no vehicle).
+  v_appt := public.approve_from_inbox(
+    v_item, v_day, '21:00', 60, 'Confirmed on WhatsApp',
+    (select e.id from public.inbox_entries e where e.item_id = v_item and e.completed_at is not null
+     order by e.created_at limit 1)
+  );
+  if not exists (select 1 from public.appointments where id = v_appt and status = 'APPROVED'
+                 and approved_by = v_admin and inbox_item_id = v_item and service_id is null
+                 and vehicle_id is not null) then
+    raise exception 'FAIL: approved booking not created correctly';
+  end if;
+  if (select status from public.inbox_items where id = v_item) <> 'DONE'
+     or (select appointment_id from public.inbox_items where id = v_item) <> v_appt then
+    raise exception 'FAIL: card not marked DONE with its booking';
+  end if;
+  begin
+    perform public.approve_from_inbox(v_item, v_day, '21:00');
+    raise exception 'FAIL: card booked twice';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'already_booked' then raise exception 'FAIL: expected already_booked, got %', sqlerrm; end if;
+  end;
+
+  -- Another card can't take the same slot, and nothing is left half-done.
+  select id into v_other from public.inbox_items where email_normalized = 'mere@example.com';
+  begin
+    perform public.approve_from_inbox(v_other, v_day, '21:30');
+    raise exception 'FAIL: conflicting booking approved from the Inbox';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'slot_conflict' then raise exception 'FAIL: expected slot_conflict, got %', sqlerrm; end if;
+  end;
+  if (select status from public.inbox_items where id = v_other) = 'DONE'
+     or exists (select 1 from public.appointments where inbox_item_id = v_other) then
+    raise exception 'FAIL: failed approval left changes behind';
+  end if;
+
+  perform public.set_inbox_status(v_other, 'DONE');
+  perform public.set_inbox_status(v_other, 'NEW');
+  if (select count(*) from public.activities where related_id = v_other
+      and activity_type = 'inbox.status_changed' and created_by = v_admin) <> 2 then
+    raise exception 'FAIL: status changes not logged';
+  end if;
+
+  -- Admins can see the notification queue.
+  if (select count(*) from public.notifications) < 3 then
+    raise exception 'FAIL: admin cannot read notifications';
+  end if;
 end $$;
 
 reset role;
