@@ -42,8 +42,8 @@ All quoted text is copied **verbatim** from the live site, including its origina
 | Phone | (027) 770 - 0486 |
 | WhatsApp | 021 266 5208 (`+64 21 266 5208`). A different number from the phone line. Confirmed by the owner on 2026-11-11; not shown on the old site. |
 | SMS | 021 266 5208 for now (owner's choice on 2026-11-11). |
-| New-request notifications | info@afterhoursworkshop.co.nz (owner confirmed on 2026-11-11). |
-| Social media | None found |
+| New-request notifications | Telegram group (primary, from 2026-11-12); email backup to info@afterhoursworkshop.co.nz if configured. |
+| Social media | None found. Facebook Messenger and Instagram buttons stay hidden until the owner provides the account names. |
 | Map embed | Google map of St Johns in the footer of every page (seen in `docs/design-reference/`) |
 
 **Contact form** (About and Services pages, from the screenshots): Name, split into First Name *(required)* and Last Name *(required)*; Email *(required)*; a "Sign up for news and updates" checkbox; Message *(required)*; and a "Submit" button.

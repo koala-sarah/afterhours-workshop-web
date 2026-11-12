@@ -1,77 +1,77 @@
-# Intake Copy — to be confirmed by the owner
+# Request Form Copy — to be confirmed by the owner
 
-Everything a customer reads in the chat intake (and the prefilled messages the operator sends) is listed here. **Nothing in this file may be invented by a developer or an AI.** Until the owner fills an item, its text stays empty in `src/config/intake-flow.ts` and the related button or message is hidden.
+Everything a customer reads on the request form, the finish screen and the contact buttons, plus the message the operator receives, is listed here. **Nothing in this file may be invented by a developer or an AI.** Until the owner confirms an item, it shows the placeholder noted below (or is hidden).
 
 How to fill it: write the wording in the "Owner's text" column (or send it by message/email) and a developer copies it into the config. Mark each item with the date it was confirmed.
 
 Status key: ⬜ not provided · ✅ confirmed
 
-## Contact numbers (confirmed)
+## Contact buttons
 
-| Item | Value | Status |
+| Button | Value | Status |
 |---|---|---|
-| Call button | (027) 770 - 0486 | ✅ 2026-11-11 |
-| WhatsApp button | 021 266 5208 (`+64 21 266 5208`) | ✅ 2026-11-11 |
-| SMS button | 021 266 5208 (for now) | ✅ 2026-11-11 |
-| New-request email goes to | info@afterhoursworkshop.co.nz | ✅ 2026-11-11 |
+| Call | (027) 770 - 0486 | ✅ (existing site) |
+| SMS | 021 266 5208 | ✅ 2026-11-11 |
+| WhatsApp | 021 266 5208 (`+64 21 266 5208`) | ✅ 2026-11-11 |
+| Email | info@afterhoursworkshop.co.nz | ✅ (existing site) |
+| Facebook Messenger | Facebook page username (for `m.me/<username>`) | ⬜ hidden until provided |
+| Instagram | Instagram username (for `ig.me/m/<username>`) | ⬜ hidden until provided |
 
-## 1. General chat text
+## 1. Request form
 
 | Item | Where it appears | Owner's text | Status |
 |---|---|---|---|
-| Intro line | Top of the chat, before step 1 | | ⬜ |
-| Privacy note | Step 2 (contact): answers are saved as you go and used only to contact you | | ⬜ |
-| Finish message | After the last step. Must not mention price, diagnosis or a confirmed booking | | ⬜ |
-| "I'm not sure" label | Every step | | ⬜ |
-| Contact bar label | Sticky call/WhatsApp/SMS bar | | ⬜ |
-| Link to the secondary form | Under the chat | | ⬜ |
+| Page heading and intro line | Top of `/appointments` | | ⬜ |
+| "I'm not sure" label for the registration | Registration field | | ⬜ |
+| Optional note placeholder | Under the problem buttons | | ⬜ |
+| Submit button label | Bottom of the form | | ⬜ |
+| Privacy note | Under the submit button (what the details are used for) | | ⬜ |
 
-## 2. Symptom categories (step 1)
+## 1b. Request chat
 
-One row per category button. "Keywords" are words in the customer's free-text line that pre-select this category (the customer still confirms).
-
-| # | Button label | Keywords | Status |
+| Item | Where it appears | Owner's text | Status |
 |---|---|---|---|
-| 1 | | | ⬜ |
-| 2 | | | ⬜ |
-| 3 | | | ⬜ |
-| … | | | |
+| "Chat with us" button label | Corner button on every page | | ⬜ |
+| Greeting line | First message in the chat | | ⬜ |
+| Question for each step (problem, name and phone, registration, contact method, times) | Chat messages | | ⬜ |
+| "I'm not sure" / "Skip" labels | Every step | | ⬜ |
+| Privacy note | Name and phone step (answers are saved as you go) | | ⬜ |
 
-## 3. Symptom details (step 4)
+## 2. Problem / work buttons (form and chat)
 
-For each category above: the follow-up buttons, and whether a button is a **danger symptom** (shows a safety warning).
+One row per button. Candidates from the existing site (not yet confirmed as buttons): Basic Service, Advanced Service, Track-ready Service, repair, upgrade, and "Not sure".
 
-| Category | Detail button label | Danger? (Y/N) | Status |
-|---|---|---|---|
-| | | | ⬜ |
-
-## 4. Safety warnings and guidance
-
-Shown when a danger symptom is chosen, or for a whole category. **Required**: a danger button stays hidden until its warning text is confirmed.
-
-| Applies to | Warning / guidance text | Status |
+| # | Button label | Status |
 |---|---|---|
-| | | ⬜ |
+| 1 | | ⬜ |
+| 2 | | ⬜ |
+| 3 | | ⬜ |
+| … | | |
 
-## 5. Drivable question (step 5)
+## 3. Preferred times
 
-| Item | Owner's text | Status |
+| Item | Proposed | Status |
 |---|---|---|
-| Question | | ⬜ |
-| Extra note when "No" is chosen (e.g. what to do if the car can't be moved) | | ⬜ |
+| Choices | Weekday evening / Weekend / Any time | ⬜ |
 
-## 6. Contact preferences (step 6)
+## 4. Finish screen
 
-| Item | Owner's text | Status |
+| Item | Proposed (from the brief) | Status |
 |---|---|---|
-| Question for the preferred method | | ⬜ |
-| Time-window choices (e.g. which parts of the day/week the operator can call back) | | ⬜ |
+| Message | "Your request has been received. A mechanic will check it and contact you directly." Must not mention price, diagnosis or a confirmed booking. | ⬜ |
 
-## 7. Prefilled messages for the operator
+## 5. Home page "How it works"
 
-The text inserted when the operator taps WhatsApp/SMS on an Inbox card. Placeholders in `{braces}` are filled automatically.
+Replaces the old booking explanation (no "Online booking will be available in July 2025").
+
+| Step | Owner's text | Status |
+|---|---|---|
+| 1 | | ⬜ |
+| 2 | | ⬜ |
+| 3 | | ⬜ |
+
+## 6. Operator messages
 
 | Use | Owner's text | Status |
 |---|---|---|
-| First reply to a new request (can use `{name}`, `{vehicle}`) | | ⬜ |
-| Booking confirmed (can use `{name}`, `{date}`, `{time}`) | | ⬜ |
+| Prefilled WhatsApp reply in the Telegram alert (`wa.me` link; can use `{name}`, `{rego}`) | | ⬜ (link opens with no text until provided) |
