@@ -13,6 +13,13 @@ export const siteConfig = {
     email: "info@afterhoursworkshop.co.nz",
     phoneDisplay: "(027) 770 - 0486",
     phoneHref: "tel:+64277700486",
+    /** SMS and WhatsApp number confirmed by the owner (2026-11-11, docs/INTAKE_COPY.md). */
+    sms: { display: "021 266 5208", href: "sms:+64212665208" },
+    whatsapp: { display: "021 266 5208", href: "https://wa.me/64212665208" },
+    /** Facebook page username for m.me/<username>. Not confirmed: the button is hidden. */
+    messengerUsername: null as string | null,
+    /** Instagram username for ig.me/m/<username>. Not confirmed: the button is hidden. */
+    instagramUsername: null as string | null,
     address: {
       street: "80 Morrin Road",
       suburb: "St Johns",

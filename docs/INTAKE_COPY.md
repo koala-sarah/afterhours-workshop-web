@@ -6,6 +6,8 @@ How to fill it: write the wording in the "Owner's text" column (or send it by me
 
 Status key: ⬜ not provided · ✅ confirmed
 
+Where it lives: request form and finish screen wording, problem buttons and time choices are in `src/config/intake.ts` (the site currently shows placeholder text for every ⬜ item there); contact numbers and handles are in `src/config/site.ts`.
+
 ## Contact buttons
 
 | Button | Value | Status |

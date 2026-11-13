@@ -23,12 +23,14 @@ export function looksLikeBot({ honeypot, startedAt }: { honeypot?: string; start
  * Returns null when no IP is available (e.g. local development).
  */
 export async function clientFingerprint(): Promise<string | null> {
-  const h = await headers();
-  const ip =
-    h.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    h.get("x-real-ip")?.trim() ||
-    null;
+  const ip = await clientIp();
   const secret = process.env.SUPABASE_SECRET_KEY;
   if (!ip || !secret) return null;
   return createHmac("sha256", secret).update(`submission-ip:${ip}`).digest("hex");
+}
+
+/** The visitor's IP address from the hosting proxy headers (null locally). Never stored or logged. */
+export async function clientIp(): Promise<string | null> {
+  const h = await headers();
+  return h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip")?.trim() || null;
 }

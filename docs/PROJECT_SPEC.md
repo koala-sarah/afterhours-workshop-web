@@ -157,9 +157,9 @@ Later, missed-call summaries and other channels may land in the same request lis
    7. Customer and vehicle management ✅ (kept, becomes read-only in 15)
    8. Direction docs (chat intake) ✅ (superseded by 10)
    9. Inbox and intake database ✅ (request tables, chat session saving and the maintenance job are reused)
-   10. Direction docs: this spec, `CLAUDE.md`, `docs/INTAKE_COPY.md`, `.env.example`
-   11. Database adjustment: nullable vehicle make/model, new answer shape for form and chat, notification channel (TELEGRAM/EMAIL); RLS checks; types
-   12. Request form: UI, Zod, Turnstile, server action, finish screen, contact form
+   10. Direction docs ✅: this spec, `CLAUDE.md`, `docs/INTAKE_COPY.md`, `.env.example`
+   11. Database adjustment ✅: nullable vehicle make/model, new answer shape for form and chat, notification channel (TELEGRAM/EMAIL); RLS checks; types
+   12. Request form ✅: UI, Zod, Turnstile, server action, finish screen, contact form
    13. Request chat: flow config, chat UI (opens from every page), step saving, Turnstile
    14. Notifications: Telegram, optional email backup, abandoned-chat alerts, delivery record, server logs
    15. Contact buttons and local SEO

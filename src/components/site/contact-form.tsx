@@ -1,24 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import { TurnstileWidget, type TurnstileHandle } from "@/components/site/turnstile-widget";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { siteConfig } from "@/config/site";
-import { submitContactForm } from "@/lib/enquiries/actions";
+import { submitContactMessage } from "@/lib/intake/actions";
 import {
   contactFormSchema,
-  type ContactFormResult,
+  type ContactField,
+  type ContactFormInput,
   type ContactFormValues,
-} from "@/lib/enquiries/contact-schema";
+} from "@/lib/intake/contact-schema";
 
 function RequiredHint() {
   return <span className="font-normal text-section-muted">(required)</span>;
 }
+
+function OrPhoneHint() {
+  return <span className="font-normal text-section-muted">(or phone)</span>;
+}
+
+const EMPTY: ContactFormInput = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  message: "",
+  website: "",
+  startedAt: 0,
+  turnstileToken: "",
+};
 
 function FieldError({ id, message }: { id: string; message?: string }) {
   if (!message) return null;
@@ -31,36 +47,51 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 
 /** Contact form in the existing site's layout (Name / Email / Message / Submit). */
 export function ContactForm() {
-  const [result, setResult] = useState<ContactFormResult | null>(null);
+  const [sent, setSent] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileHandle>(null);
   const {
     register,
     handleSubmit,
     setError,
+    setValue,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<ContactFormValues>({
+  } = useForm<ContactFormInput, unknown, ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
-    defaultValues: { firstName: "", lastName: "", email: "", phone: "", message: "", company: "" },
+    defaultValues: EMPTY,
   });
 
-  const onSubmit = handleSubmit(async (values) => {
-    setResult(null);
-    const res = await submitContactForm(values);
-    if (res.status === "invalid") {
-      for (const [field, msgs] of Object.entries(res.fieldErrors)) {
-        if (msgs?.[0]) setError(field as keyof ContactFormValues, { message: msgs[0] });
+  // Time the form was opened (bots submit instantly).
+  useEffect(() => {
+    setValue("startedAt", Date.now());
+  }, [setValue]);
+
+  async function send(values: ContactFormValues) {
+    setSent(false);
+    setFormError(null);
+    try {
+      const res = await submitContactMessage(values);
+      if (res.status === "success") {
+        reset({ ...EMPTY, startedAt: Date.now() });
+        setSent(true);
+        return;
       }
-      return;
+      setFormError(res.message);
+      for (const [field, message] of Object.entries(res.fieldErrors ?? {})) {
+        if (message) setError(field as ContactField, { message });
+      }
+    } catch {
+      setFormError("We couldn’t send your message. Please check your connection and try again.");
+    } finally {
+      turnstileRef.current?.reset(); // tokens are single use
     }
-    if (res.status === "success") reset();
-    setResult(res);
-  });
+  }
 
-  const describedBy = (field: keyof ContactFormValues) =>
-    errors[field] ? `contact-${field}-error` : undefined;
+  const describedBy = (field: ContactField) => (errors[field] ? `contact-${field}-error` : undefined);
 
   return (
-    <form onSubmit={onSubmit} noValidate className="space-y-field-gap" aria-label="Contact form">
+    <form onSubmit={(event) => void handleSubmit(send)(event)} noValidate className="space-y-field-gap" aria-label="Contact form">
       <fieldset className="space-y-label-gap">
         <legend className="mb-label-gap">Name</legend>
         <div className="grid gap-field-gap sm:grid-cols-2 sm:gap-2.5">
@@ -95,7 +126,7 @@ export function ContactForm() {
 
       <div className="space-y-label-gap">
         <Label htmlFor="contact-email">
-          Email <RequiredHint />
+          Email <OrPhoneHint />
         </Label>
         <Input
           id="contact-email"
@@ -123,9 +154,10 @@ export function ContactForm() {
 
       {/* Honeypot: hidden from people and assistive tech. */}
       <div aria-hidden className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
-        <label htmlFor="contact-company">Company</label>
-        <input id="contact-company" tabIndex={-1} autoComplete="off" {...register("company")} />
+        <label htmlFor="contact-website">Leave this field empty</label>
+        <input id="contact-website" tabIndex={-1} autoComplete="off" {...register("website")} />
       </div>
+      <input type="hidden" {...register("startedAt")} />
 
       <div className="space-y-label-gap">
         <Label htmlFor="contact-message">
@@ -140,25 +172,22 @@ export function ContactForm() {
         <FieldError id="contact-message-error" message={errors.message?.message} />
       </div>
 
+      <TurnstileWidget
+        ref={turnstileRef}
+        action="contact"
+        theme="light"
+        onToken={(token) => setValue("turnstileToken", token)}
+      />
+
       <Button type="submit" variant="brand" size="brand" disabled={isSubmitting}>
         {isSubmitting ? "Sending…" : "Submit"}
       </Button>
 
       <div aria-live="polite">
-        {result?.status === "success" && (
-          <p>Thanks! We’ve received your message and will be in touch shortly.</p>
-        )}
-        {result?.status === "unavailable" && (
-          <p>
-            Online messages aren’t available yet. Please email{" "}
-            <a className="underline" href={`mailto:${siteConfig.contact.email}`}>
-              {siteConfig.contact.email}
-            </a>{" "}
-            or call{" "}
-            <a className="underline" href={siteConfig.contact.phoneHref}>
-              {siteConfig.contact.phoneDisplay}
-            </a>
-            .
+        {sent && <p>Thanks! We’ve received your message and will be in touch shortly.</p>}
+        {formError && (
+          <p role="alert" className="text-section-error">
+            {formError}
           </p>
         )}
       </div>
