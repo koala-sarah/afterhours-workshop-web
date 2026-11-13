@@ -38,15 +38,7 @@ export default async function ServicesPage() {
         </Container>
       </Section>
 
-      <ContactSection
-        narrow
-        intro={
-          <p>
-            Interested in working together? Fill out some info and we will be in touch shortly.
-            We can’t wait to hear from you!
-          </p>
-        }
-      />
+      <ContactSection narrow />
     </>
   );
 }

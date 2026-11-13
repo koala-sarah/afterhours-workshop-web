@@ -75,7 +75,7 @@ Replaces the old booking explanation (no "Online booking will be available in Ju
 | 2 | | ⬜ |
 | 3 | | ⬜ |
 
-Current placeholder (`howItWorks` in `src/config/intake.ts`): 1. Send us a request (it takes a minute), chat with us, or just call or message us. 2. A mechanic checks your request and contacts you directly. 3. We arrange the details and a time with you. The "Book now" buttons now read "Send a request".
+Current placeholder (`howItWorks` in `src/config/intake.ts`): 1. Send a request, chat, or call us. 2. A mechanic checks it and contacts you. 3. We arrange a time with you. The "Book now" buttons, and the home hero button (was "Learn more"), now read "Send a request". "Why choose us" was removed (it repeated the hero).
 
 ## 5b. Search descriptions
 
@@ -84,7 +84,8 @@ Page titles and Google descriptions are in `src/config/seo.ts`, written only fro
 | Item | Status |
 |---|---|
 | Home / Services / About / Contact / Request descriptions | ⬜ |
-| "Schedule today" section text on Home ("Book your slot for car services…", from the existing site) | ⬜ keep or reword (a request is not a booking) |
+| Home "Schedule today" text, now "Not sure what you need? Send a request or give us a call." (`sitePrompts.schedule`; was "Book your slot for car services…") | ⬜ |
+| "Contact us" band on About / Services, now "Questions? Call, message or chat with us. We’ll get back to you." (`sitePrompts.contact`; was "Fill out some info…", but there is no form there any more) | ⬜ |
 
 ## 6. Operator messages
 

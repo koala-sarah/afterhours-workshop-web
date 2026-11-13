@@ -114,10 +114,14 @@ export const chatCopy = {
  */
 export const howItWorks = {
   heading: "How it works",
-  steps: [
-    "Send us a request (it takes a minute), chat with us, or just call or message us.",
-    "A mechanic checks your request and contacts you directly.",
-    "We arrange the details and a time with you.",
-  ],
+  steps: ["Send a request, chat, or call us.", "A mechanic checks it and contacts you.", "We arrange a time with you."],
   cta: "Send a request",
+} as const;
+
+/** Short prompts that replace template / booking wording (INTAKE_COPY.md 5b, ⬜ placeholders). */
+export const sitePrompts = {
+  // "Contact us" band on About and Services (there is no form there any more).
+  contact: "Questions? Call, message or chat with us. We’ll get back to you.",
+  // Home "Schedule today" band (replaces "Book your slot for car services…").
+  schedule: "Not sure what you need? Send a request or give us a call.",
 } as const;

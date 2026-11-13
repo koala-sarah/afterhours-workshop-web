@@ -56,21 +56,7 @@ export default function AboutPage() {
         </Container>
       </Section>
 
-      <ContactSection
-        intro={
-          <>
-            <p>
-              You’ve got any questions? Any consult, help, or additional information needed but
-              don’t want to talk over a phone?
-            </p>
-            <p>
-              Fill out some info and we will be in touch shortly.
-              <br />
-              We can’t wait to have a chat with you!
-            </p>
-          </>
-        }
-      />
+      <ContactSection />
     </>
   );
 }

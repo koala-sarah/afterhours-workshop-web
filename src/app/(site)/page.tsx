@@ -7,7 +7,7 @@ import { Section } from "@/components/layout/section";
 import { ServiceGrid } from "@/components/site/service-grid";
 import { SiteHeader } from "@/components/site/site-header";
 import { Button } from "@/components/ui/button";
-import { howItWorks } from "@/config/intake";
+import { howItWorks, sitePrompts } from "@/config/intake";
 import { siteConfig } from "@/config/site";
 import { getServices } from "@/lib/services/catalog";
 import { pageMetadata } from "@/config/seo";
@@ -49,14 +49,15 @@ export default async function HomePage() {
               </p>
             </div>
 
+            {/* Main action up front for visitors from Google (was "Learn more" → About). */}
             <Button
               nativeButton={false}
-              render={<Link href="/about" />}
+              render={<Link href="/appointments" />}
               variant="brand"
               size="brand-lg"
               className="mt-10 min-w-[17rem] md:mt-[8.6rem]"
             >
-              Learn more
+              {howItWorks.cta}
             </Button>
           </div>
 
@@ -81,18 +82,9 @@ export default async function HomePage() {
         </Container>
       </Section>
 
-      {/* Why us (verified claims only) + how a request works. */}
+      {/* How a request works (replaces "Why choose us", which repeated the hero). */}
       <Section theme="bright" padding="md">
-        <Container className="grid gap-12 md:grid-cols-2 md:gap-[8vw]">
-          <div className="space-y-6">
-            <h2>Why choose us</h2>
-            <ul className="space-y-4 text-body-lg">
-              <li>Open after hours: 5 PM to 10 PM on weekdays and all day on weekends.</li>
-              <li>Your local workshop in St Johns, Auckland.</li>
-              <li>From general maintenance &amp; repair to upgrades for your car.</li>
-              <li>Qualified professional mechanic, with prices kept reasonable and competitive.</li>
-            </ul>
-          </div>
+        <Container>
           <div className="space-y-6">
             <h2>{howItWorks.heading}</h2>
             <ol className="space-y-4 text-body-lg">
@@ -112,8 +104,7 @@ export default async function HomePage() {
           <div className="space-y-8">
             <h2>Schedule today</h2>
             <p className="text-body-lg text-paper">
-              Book your slot for car services, if you are not sure what to choose, give us a
-              call or email us!
+              {sitePrompts.schedule}
             </p>
             <div className="flex flex-wrap items-center gap-x-6 gap-y-4 text-section-muted">
               <Button
