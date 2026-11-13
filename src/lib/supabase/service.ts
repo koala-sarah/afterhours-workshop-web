@@ -8,10 +8,11 @@ import { getSupabasePublicEnv } from "./env";
 /**
  * Server-only client using SUPABASE_SECRET_KEY (service_role).
  *
- * Bypasses RLS, so it is used for exactly one thing: calling the public
- * submission functions (submit_appointment_request / submit_enquiry), which are
- * restricted to the server so spam checks cannot be skipped. Never use it to read
- * data for a page, and never import it from client code (`server-only` enforces that).
+ * Bypasses RLS. Used only for (1) the server-only submission functions
+ * (request form, chat), so spam checks cannot be skipped, and (2) the
+ * notification sender, which reads one request to build the operator alert.
+ * Never use it to read data for a page, and never import it from client code
+ * (`server-only` enforces that).
  */
 export function createSupabaseServiceClient() {
   const { url } = getSupabasePublicEnv();

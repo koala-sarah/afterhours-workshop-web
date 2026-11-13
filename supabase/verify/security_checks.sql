@@ -1209,6 +1209,41 @@ end $$;
 
 reset role;
 
+-- 7g. Notification sending (Build 14).
+do $$
+declare
+  v_entry uuid;
+  v_kinds text[];
+begin
+  -- A chat marked abandoned and then finished gets both alerts (per channel).
+  set local role service_role;
+  perform public.intake_start(repeat('7', 64), 'fp-intake-0000000007', 'chat-1');
+  perform public.intake_save_step(repeat('7', 64), 'contact', '{"contact":{"name":"Rua","phone":"021 707 0707"}}');
+  reset role;
+  select entry_id into v_entry from private.intake_sessions where token_hash = repeat('7', 64);
+  update public.inbox_entries set abandoned_at = now() where id = v_entry;
+  set local role service_role;
+  perform public.intake_save_step(repeat('7', 64), 'times', '{"reach":{"method":"PHONE","times":[]}}', true);
+  reset role;
+  select array_agg(kind || '/' || channel order by kind, channel) into v_kinds
+  from public.notifications where entry_id = v_entry;
+  if v_kinds is distinct from array['ABANDONED_REQUEST/TELEGRAM', 'ABANDONED_REQUEST/EMAIL', 'NEW_REQUEST/TELEGRAM', 'NEW_REQUEST/EMAIL'] then
+    raise exception 'FAIL: abandoned-then-finished chat alerts wrong: %', v_kinds;
+  end if;
+
+  -- The scheduled ping does nothing without pg_net / Vault secrets.
+  if private.ping_notification_dispatch() not in ('not_configured', 'requested') then
+    raise exception 'FAIL: ping with due alerts returned %', private.ping_notification_dispatch();
+  end if;
+
+  -- Only the database itself may call it.
+  if has_function_privilege('anon', 'private.ping_notification_dispatch()', 'execute')
+     or has_function_privilege('authenticated', 'private.ping_notification_dispatch()', 'execute')
+     or has_function_privilege('service_role', 'private.ping_notification_dispatch()', 'execute') then
+    raise exception 'FAIL: ping_notification_dispatch is executable by an API role';
+  end if;
+end $$;
+
 select 'ALL SECURITY CHECKS PASSED' as result;
 
 rollback;

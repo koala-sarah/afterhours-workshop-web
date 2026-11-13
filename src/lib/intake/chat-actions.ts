@@ -2,9 +2,11 @@
 
 import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
+import { after } from "next/server";
 
 import { CHAT_FLOW_VERSION } from "@/config/intake";
 import { siteConfig } from "@/config/site";
+import { dispatchSafely } from "@/lib/notifications/dispatch";
 import { clientFingerprint, clientIp } from "@/lib/security/spam";
 import { verifyTurnstile } from "@/lib/security/turnstile";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
@@ -93,7 +95,10 @@ export async function saveChatStep(input: unknown): Promise<ChatStepResult> {
     return dbError("intake_save_step", error);
   }
 
-  if (complete) jar.delete(COOKIE);
+  if (complete) {
+    jar.delete(COOKIE);
+    after(dispatchSafely); // operator alert, sent after the response
+  }
   return { status: "ok" };
 }
 

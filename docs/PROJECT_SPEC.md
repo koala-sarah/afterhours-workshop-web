@@ -132,6 +132,7 @@ Supabase Postgres, version-controlled migrations, UUID keys, UTC timestamps (dis
 - Optional **email backup** (Resend) to the configured address, sent as well when configured.
 - Every attempt is recorded (SENT / FAILED / SKIPPED). Failures are logged on the server and never affect the saved request. With neither channel configured, requests still work.
 - No emails or messages to customers.
+- Retries (up to 5, with back-off) and abandoned-chat alerts are sent by a scheduled call from the database (pg_cron + pg_net) to the website's dispatch route. Setup: `docs/NOTIFICATIONS.md`.
 
 ## 11. Future-Proofing (do NOT implement now)
 
@@ -161,7 +162,7 @@ Later, missed-call summaries and other channels may land in the same request lis
    11. Database adjustment ✅: nullable vehicle make/model, new answer shape for form and chat, notification channel (TELEGRAM/EMAIL); RLS checks; types
    12. Request form ✅: UI, Zod, Turnstile, server action, finish screen, contact form
    13. Request chat ✅: flow config, chat UI (opens from every page), step saving, Turnstile
-   14. Notifications: Telegram, optional email backup, abandoned-chat alerts, delivery record, server logs
+   14. Notifications ✅: Telegram, optional email backup, abandoned-chat alerts, delivery record, server logs
    15. Contact buttons and local SEO
    16. Read-only admin: request list, write controls hidden
    17. Testing and deployment

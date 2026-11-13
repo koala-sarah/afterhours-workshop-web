@@ -1,9 +1,11 @@
 "use server";
 
+import { after } from "next/server";
 import { z } from "zod";
 
 import { REQUEST_FORM_VERSION } from "@/config/intake";
 import { siteConfig } from "@/config/site";
+import { dispatchSafely } from "@/lib/notifications/dispatch";
 import { clientFingerprint, clientIp, looksLikeBot } from "@/lib/security/spam";
 import { verifyTurnstile } from "@/lib/security/turnstile";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
@@ -41,8 +43,8 @@ const REQUEST_ERRORS: Record<string, Known<RequestField>> = {
  *
  * Order: bot heuristics -> Turnstile -> Zod -> database function (validation
  * again, grouping by phone, double-submit check, per-client throttling).
- * The database queues the operator notifications in the same transaction;
- * they are sent afterwards and can never lose the request.
+ * The database queues the operator alerts in the same transaction; they are
+ * sent after the response (after()) and can never lose the request.
  */
 export async function submitRequest(input: unknown): Promise<SubmitResult<RequestField>> {
   return submit(input, {
@@ -127,5 +129,7 @@ async function submit<S extends z.ZodType<SpamFields>, F extends string>(
   }
 
   console.info("request saved", { kind: opts.kind, entryId });
+  // Alert the operator after the response is sent; the visitor never waits and a failure can't undo the save.
+  after(dispatchSafely);
   return { status: "success" };
 }

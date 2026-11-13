@@ -19,6 +19,7 @@ Supabase Postgres 17. Everything is defined in version-controlled migrations in 
 | `…1030_inbox_admin_functions.sql` | `set_inbox_status`, `log_inbox_contact`, `add_inbox_note`, `approve_from_inbox` |
 | `…1040_notifications_and_jobs.sql` | `notifications` queue, sender functions, maintenance job (pg_cron every 5 minutes) |
 | `…1050_request_form_and_telegram.sql` | Registration-only vehicles (make/model optional), new answer shape for the request form and chat, required form fields, one notification per channel (TELEGRAM, EMAIL) |
+| `…1060_notification_dispatch.sql` | One alert per request, channel **and kind** (an abandoned chat that is finished later also gets its "new request" alert); scheduled dispatch ping (pg_cron + pg_net → website route, secrets in Vault) |
 
 `supabase/seed.sql` adds one sample contact-form message for **local development only**.
 
@@ -181,8 +182,9 @@ Extra error codes: `already_booked`, `contact_required`, `slot_conflict`, `past_
 
 ### Notifications and maintenance
 
-- A finished request, or an abandoned chat with contact details, inserts one `notifications` row per channel (`TELEGRAM`, `EMAIL`) in the same transaction (unique `(entry_id, channel)`: at most one alert per request and channel). A channel that isn't configured is finished as `SKIPPED`. Sending happens later on the server; failure never touches the request.
+- A finished request, or an abandoned chat with contact details, inserts one `notifications` row per channel (`TELEGRAM`, `EMAIL`) in the same transaction (unique `(entry_id, channel, kind)`: at most one alert per request, channel and kind; an abandoned chat finished later gets both). A channel that isn't configured is finished as `SKIPPED`. Sending happens later on the server; failure never touches the request.
 - Server sender (service_role only): `claim_notifications(limit)` hands out due rows once (each claim is an attempt with back-off; gives up after 5), then `finish_notification(id, SENT / FAILED / SKIPPED, error?, recipients?)`.
+- **Sending:** the website sends due alerts straight after a request is saved (`after()`). For retries and abandoned chats, pg_cron job `notification-dispatch` (every 5 minutes, one minute after maintenance) runs `private.ping_notification_dispatch()`, which, only when something is due, POSTs to the website's `/api/notifications/dispatch` with `Authorization: Bearer <secret>` via pg_net. It reads two Vault secrets and does nothing until both exist (setup in `docs/NOTIFICATIONS.md`): `notify_dispatch_url`, `notify_dispatch_secret`.
 - `private.run_intake_maintenance()` marks abandoned chats and deletes old sessions. It runs every 5 minutes with **pg_cron** (job `inbox-maintenance`, enabled by migration 1040 when pg_cron is available). The server can also call `public.run_intake_maintenance()`.
 
 ## Applying the migrations
