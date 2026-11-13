@@ -17,7 +17,7 @@ Where it lives: request form and finish screen wording, problem buttons and time
 | WhatsApp | 021 266 5208 (`+64 21 266 5208`) | ✅ 2026-11-11 |
 | Email | info@afterhoursworkshop.co.nz | ✅ (existing site) |
 | Facebook Messenger | Facebook page username (for `m.me/<username>`) | ⬜ hidden until provided |
-| Instagram | Instagram username (for `ig.me/m/<username>`) | ⬜ hidden until provided |
+| Instagram | afterhours_workshop_nz (`ig.me/m/afterhours_workshop_nz`) | ✅ 2026-11-13 |
 
 ## 1. Request form
 
@@ -33,15 +33,18 @@ Where it lives: request form and finish screen wording, problem buttons and time
 
 | Item | Where it appears | Owner's text | Status |
 |---|---|---|---|
-| "Chat with us" button label | Corner button on every page | | ⬜ |
+| "Chat with us" button label | Corner button on every page, and the buttons in the "Contact us" sections | | ⬜ |
 | Greeting line | First message in the chat | | ⬜ |
 | Question for each step (problem, name and phone, registration, contact method, times) | Chat messages | | ⬜ |
 | "I'm not sure" / "Skip" labels | Every step | | ⬜ |
 | Privacy note | Name and phone step (answers are saved as you go) | | ⬜ |
+| Quick-question buttons (Send a request / What’s in each service? / Opening hours / Where are you? / Phone & contact) | First message in the chat | | ⬜ |
+
+Quick answers are built only from verified details: hours, address and numbers from `src/config/site.ts`, and service descriptions from the `services` table (as on the Services page). The chat never shows prices.
 
 ## 2. Problem / work buttons (form and chat)
 
-One row per button. Candidates from the existing site (not yet confirmed as buttons): Basic Service, Advanced Service, Track-ready Service, repair, upgrade, and "Not sure".
+One row per button. Candidates from the existing site (not yet confirmed as buttons): Basic Service, Advanced Service, Track-ready Service, repair, upgrade, and "Not sure". Plus "Question / something else" (replaces the old contact form; the chat then asks for the question).
 
 | # | Button label | Status |
 |---|---|---|

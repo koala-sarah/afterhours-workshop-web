@@ -24,6 +24,8 @@
   --color-olive: #3d4435; /* darkAccent   hsl(88 12.4% 23.73%) */
   --color-ink: #000000; /* black */
   --color-paper: #ffffff; /* white */
+  /* Request chat window: message area behind the bubbles (light steel) */
+  --color-chat-surface: #eceff1;
 
 
   /* Layout (Squarespace: maxPageWidth / pagePadding / mobile gutter) */

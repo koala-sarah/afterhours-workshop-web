@@ -34,7 +34,7 @@ Rebuild and improve the website for **After Hours Workshop**, an automotive work
 
 ## 4. Customer-Facing Website
 
-Responsive, mobile-first pages: **Home**, **Services**, **About**, **Contact** (details, map, contact form), and **Request** (`/appointments`, section 5). A "Chat with us" button on every public page opens the request chat (section 5). The home page explains how it works: send a request (or call / message) → a mechanic checks and contacts you.
+Responsive, mobile-first pages: **Home**, **Services**, **About**, **Contact** (details, map, and the request chat shown open on the page), and **Request** (`/appointments`, section 5). A "Chat with us" corner button on the other public pages opens the same chat (section 5). There is **one form** (`/appointments`) and **one chat**; no separate contact form, so visitors never have to choose between similar forms. The home page explains how it works: send a request (or call / message) → a mechanic checks and contacts you.
 
 ### Contact buttons
 
@@ -46,7 +46,7 @@ Shown in the header, the footer, a sticky bottom bar on mobile, and the request 
 | SMS | `sms:` | 021 266 5208 |
 | WhatsApp | `https://wa.me/…` | 021 266 5208 |
 | Messenger | `https://m.me/…` | not confirmed → hidden |
-| Instagram | `https://ig.me/m/…` | not confirmed → hidden |
+| Instagram | `https://ig.me/m/…` | afterhours_workshop_nz |
 | Email | `mailto:` | info@afterhoursworkshop.co.nz |
 
 A button whose value is missing is hidden, never filled with a guess. These are plain links; no messaging API integration.
@@ -76,7 +76,7 @@ Not asked: make, model, year, preferred date (nullable in the database).
 
 ### Request chat
 
-A rule-based chat (fixed steps and buttons from config, no AI) opened from a "Chat with us" button on every public page (a bottom sheet on mobile). It asks the same things as the form, contact details early:
+A rule-based chat (fixed steps and buttons from config, no AI). It is shown open on the Contact page and opens from a "Chat with us" corner button on the other pages (a bottom sheet on mobile; hidden on `/appointments`, which has the form). "Chat with us" buttons in the About / Services "Contact us" sections open the same chat. It first offers quick answers built only from verified site data (what each service package includes, from the Services page descriptions; opening hours; address with a map link; phone / SMS / WhatsApp / email). Prices are not shown in the chat. Choosing "Send a request" (or "Request this service") asks the same things as the form, contact details early:
 
 1. Problem / work wanted (buttons + optional one line)
 2. Name and phone number
@@ -90,9 +90,9 @@ A rule-based chat (fixed steps and buttons from config, no AI) opened from a "Ch
 - Same finish message and rules as the form: never a price, diagnosis or confirmation.
 - Sessions are deleted after 30 days.
 
-### Contact form
+### General questions
 
-The contact page form (name, email or phone, message) uses the same save + notify path.
+There is no separate contact form. A "Question / something else" problem button (form and chat) lets visitors ask anything; in the chat it asks for the question text.
 
 ## 6. Admin (`/admin`)
 
@@ -160,7 +160,7 @@ Later, missed-call summaries and other channels may land in the same request lis
    10. Direction docs ✅: this spec, `CLAUDE.md`, `docs/INTAKE_COPY.md`, `.env.example`
    11. Database adjustment ✅: nullable vehicle make/model, new answer shape for form and chat, notification channel (TELEGRAM/EMAIL); RLS checks; types
    12. Request form ✅: UI, Zod, Turnstile, server action, finish screen, contact form
-   13. Request chat: flow config, chat UI (opens from every page), step saving, Turnstile
+   13. Request chat ✅: flow config, chat UI (opens from every page), step saving, Turnstile
    14. Notifications: Telegram, optional email backup, abandoned-chat alerts, delivery record, server logs
    15. Contact buttons and local SEO
    16. Read-only admin: request list, write controls hidden

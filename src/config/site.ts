@@ -18,8 +18,8 @@ export const siteConfig = {
     whatsapp: { display: "021 266 5208", href: "https://wa.me/64212665208" },
     /** Facebook page username for m.me/<username>. Not confirmed: the button is hidden. */
     messengerUsername: null as string | null,
-    /** Instagram username for ig.me/m/<username>. Not confirmed: the button is hidden. */
-    instagramUsername: null as string | null,
+    /** Instagram username for ig.me/m/<username> (confirmed by the owner 2026-11-13). */
+    instagramUsername: "afterhours_workshop_nz" as string | null,
     address: {
       street: "80 Morrin Road",
       suburb: "St Johns",

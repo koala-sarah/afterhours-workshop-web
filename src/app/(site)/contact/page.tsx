@@ -3,11 +3,13 @@ import Link from "next/link";
 
 import { Container } from "@/components/layout/container";
 import { Section } from "@/components/layout/section";
-import { ContactForm } from "@/components/site/contact-form";
+import { ChatPanel } from "@/components/site/chat-panel";
 import { EmailText } from "@/components/site/email-text";
 import { SiteHeader } from "@/components/site/site-header";
 import { Button } from "@/components/ui/button";
+import { chatCopy } from "@/config/intake";
 import { siteConfig } from "@/config/site";
+import { getChatServices } from "@/lib/services/catalog";
 
 export const metadata: Metadata = { title: "Contact" };
 
@@ -16,7 +18,8 @@ export const metadata: Metadata = { title: "Contact" };
  * "Contact us" section and footer details in the same steel styling.
  * The map is the shared footer map, as on every page of the existing site.
  */
-export default function ContactPage() {
+export default async function ContactPage() {
+  const services = await getChatServices();
   const { contact, hours } = siteConfig;
   const { address } = contact;
 
@@ -84,7 +87,10 @@ export default function ContactPage() {
             </Button>
           </div>
 
-          <ContactForm />
+          {/* The request chat replaces the old contact form (one way to leave a message). */}
+          <section aria-label={chatCopy.title}>
+            <ChatPanel variant="embedded" services={services} />
+          </section>
         </Container>
       </Section>
     </>

@@ -48,3 +48,9 @@ export async function getServices(): Promise<Service[]> {
     image: row.image_path ? { src: row.image_path, alt: row.image_alt ?? "" } : null,
   }));
 }
+
+/** Service names and descriptions for the chat's quick answers (no prices: the chat never states one). */
+export async function getChatServices() {
+  const services = await getServices();
+  return services.map(({ slug, name, description }) => ({ slug, name, description }));
+}

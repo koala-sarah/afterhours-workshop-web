@@ -10,12 +10,6 @@ import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import type { Json } from "@/lib/supabase/database.types";
 
 import {
-  contactFormSchema,
-  toContactAnswers,
-  type ContactField,
-  type ContactFormResult,
-} from "./contact-schema";
-import {
   requestFormSchema,
   toRequestAnswers,
   type RequestField,
@@ -42,14 +36,6 @@ const REQUEST_ERRORS: Record<string, Known<RequestField>> = {
   invalid_method: { field: "method", message: "Please choose how we should contact you." },
 };
 
-const CONTACT_ERRORS: Record<string, Known<ContactField>> = {
-  ...COMMON_ERRORS,
-  invalid_name: { field: "firstName", message: "Please enter your name." },
-  invalid_phone: { field: "phone", message: "Please enter a valid phone number." },
-  invalid_email: { field: "email", message: "Please enter a valid email address." },
-  invalid_message: { field: "message", message: "Please enter a message." },
-};
-
 /**
  * One-screen request form (/appointments).
  *
@@ -69,25 +55,13 @@ export async function submitRequest(input: unknown): Promise<SubmitResult<Reques
   });
 }
 
-/** Contact page form: same save path as the request form. */
-export async function submitContactMessage(input: unknown): Promise<ContactFormResult> {
-  return submit(input, {
-    schema: contactFormSchema,
-    kind: "CONTACT_FORM",
-    action: "contact",
-    toAnswers: toContactAnswers,
-    flowVersion: "contact-1",
-    errors: CONTACT_ERRORS,
-  });
-}
-
 type SpamFields = { website?: string; startedAt: number; turnstileToken?: string };
 
 async function submit<S extends z.ZodType<SpamFields>, F extends string>(
   input: unknown,
   opts: {
     schema: S;
-    kind: "FORM" | "CONTACT_FORM";
+    kind: "FORM";
     action: string;
     toAnswers: (v: z.output<S>) => object;
     flowVersion: string;

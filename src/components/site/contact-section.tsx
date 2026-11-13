@@ -3,9 +3,15 @@ import type { ReactNode } from "react";
 import { Container } from "@/components/layout/container";
 import { Section } from "@/components/layout/section";
 
-import { ContactForm } from "./contact-form";
+import Link from "next/link";
 
-/** "Contact us" band from the existing About and Services pages (steel background, text left, form right). */
+import { Button } from "@/components/ui/button";
+import { requestFormCopy } from "@/config/intake";
+
+import { ContactButtons } from "./contact-buttons";
+import { OpenChatButton } from "./open-chat-button";
+
+/** "Contact us" band from the existing About and Services pages (steel background, text left, contact options right). */
 export function ContactSection({
   intro,
   narrow = false,
@@ -21,7 +27,16 @@ export function ContactSection({
           <h2 className="text-h1">Contact us</h2>
           <div className="max-w-[30rem] space-y-4">{intro}</div>
         </div>
-        <ContactForm />
+        {/* One way to leave a message: the corner chat or the request form (no separate contact form). */}
+        <div className="space-y-6 md:pt-4">
+          <ContactButtons />
+          <div className="flex flex-wrap gap-2.5">
+            <OpenChatButton />
+            <Button nativeButton={false} render={<Link href="/appointments" />} variant="brand" size="brand">
+              {requestFormCopy.heading}
+            </Button>
+          </div>
+        </div>
       </Container>
     </Section>
   );
