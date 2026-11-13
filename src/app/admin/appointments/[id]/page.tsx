@@ -29,6 +29,8 @@ import { listCustomerVehicles } from "@/lib/customers/queries";
 
 import { AppointmentActions } from "./appointment-actions";
 import { VehicleLinkForm } from "./vehicle-link-form";
+import { ADMIN_READ_ONLY } from "@/config/admin";
+import { vehicleName } from "@/lib/vehicles/label";
 
 export const metadata: Metadata = { title: "Appointment" };
 
@@ -141,8 +143,7 @@ export default async function AppointmentDetailPage({ params }: PageProps<"/admi
               {a.vehicle ? (
                 <>
                   <Row label="Vehicle">
-                    {a.vehicle.make} {a.vehicle.model}
-                    {a.vehicle.year ? ` (${a.vehicle.year})` : ""}
+                    {vehicleName(a.vehicle)}
                   </Row>
                   <Row label="Registration">
                     <span className="font-mono uppercase">{a.vehicle.registration_number ?? "—"}</span>
@@ -156,17 +157,19 @@ export default async function AppointmentDetailPage({ params }: PageProps<"/admi
               ) : (
                 <p className="text-muted-foreground">No vehicle linked.</p>
               )}
-              <VehicleLinkForm
-                appointmentId={a.id}
-                customerId={a.customer_id}
-                currentVehicleId={a.vehicle_id}
-                vehicles={customerVehicles}
-              />
+              {!ADMIN_READ_ONLY && (
+                <VehicleLinkForm
+                  appointmentId={a.id}
+                  customerId={a.customer_id}
+                  currentVehicleId={a.vehicle_id}
+                  vehicles={customerVehicles}
+                />
+              )}
             </Card>
           </div>
 
           <Card title="History">
-            <NoteForm recordId={a.id} action={addAppointmentNote} />
+            {!ADMIN_READ_ONLY && <NoteForm recordId={a.id} action={addAppointmentNote} />}
             <ActivityTimeline items={activities} />
           </Card>
 
@@ -192,6 +195,13 @@ export default async function AppointmentDetailPage({ params }: PageProps<"/admi
         </div>
 
         <aside aria-label="Actions" className="space-y-4 lg:sticky lg:top-8 lg:self-start">
+          {ADMIN_READ_ONLY ? (
+            <p className="text-body-sm text-muted-foreground">
+              Status: {STATUS_LABELS[a.status]}. This admin area is read-only; bookings are arranged with the customer
+              directly.
+            </p>
+          ) : (
+          <>
           <h2 className="font-body text-base font-semibold normal-case">Actions</h2>
           <AppointmentActions
             appointmentId={a.id}
@@ -203,6 +213,8 @@ export default async function AppointmentDetailPage({ params }: PageProps<"/admi
           <p className="text-body-sm text-muted-foreground">
             Status: {STATUS_LABELS[a.status]}. Every change is saved in the history with your name.
           </p>
+          </>
+          )}
         </aside>
       </div>
     </div>

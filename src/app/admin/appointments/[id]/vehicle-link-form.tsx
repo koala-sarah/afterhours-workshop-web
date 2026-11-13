@@ -6,6 +6,7 @@ import Link from "next/link";
 import { adminInputClass } from "@/components/admin/fields";
 import { Button } from "@/components/ui/button";
 import { setAppointmentVehicle, type AdminActionState } from "@/lib/appointments/actions";
+import { vehicleName } from "@/lib/vehicles/label";
 
 type VehicleOption = { id: string; make: string | null; model: string | null; year: number | null; registration_number: string | null };
 
@@ -42,7 +43,7 @@ export function VehicleLinkForm({
               </option>
               {others.map((v) => (
                 <option key={v.id} value={v.id}>
-                  {v.make} {v.model}
+                  {vehicleName(v)}
                   {v.year ? ` (${v.year})` : ""}
                   {v.registration_number ? ` · ${v.registration_number.toUpperCase()}` : ""}
                 </option>

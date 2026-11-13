@@ -22,7 +22,7 @@ export type AlertData = {
 export type Alert = { subject: string; telegramHtml: string; text: string; html: string };
 
 /** Chat steps (chat-schema CHAT_STEPS) as the operator reads them. */
-const STEP_LABELS: Record<string, string> = {
+export const STEP_LABELS: Record<string, string> = {
   problem: "what they need",
   contact: "name & phone",
   vehicle: "registration",

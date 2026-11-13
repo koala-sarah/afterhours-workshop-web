@@ -14,6 +14,8 @@ import { formatDate, formatDateTime, formatTimeOfDay, toLocalParts } from "@/lib
 import { requireAdmin } from "@/lib/auth/dal";
 import { addCustomerNote } from "@/lib/customers/actions";
 import { getCustomerProfile } from "@/lib/customers/queries";
+import { ADMIN_READ_ONLY } from "@/config/admin";
+import { vehicleName } from "@/lib/vehicles/label";
 
 export const metadata: Metadata = { title: "Customer" };
 
@@ -46,10 +48,12 @@ export default async function CustomerProfilePage({ params }: PageProps<"/admin/
         <BackLink href="/admin/customers">All customers</BackLink>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-h3">{c.full_name}</h1>
-          <Link href={`/admin/customers/${c.id}/edit`} className={pillLink}>
-            <PencilIcon aria-hidden className="size-4" />
-            Edit details
-          </Link>
+          {!ADMIN_READ_ONLY && (
+            <Link href={`/admin/customers/${c.id}/edit`} className={pillLink}>
+              <PencilIcon aria-hidden className="size-4" />
+              Edit details
+            </Link>
+          )}
         </div>
         <p className="text-body-sm text-muted-foreground">
           Customer since {formatDate(toLocalParts(c.created_at).date)}
@@ -109,10 +113,12 @@ export default async function CustomerProfilePage({ params }: PageProps<"/admin/
             id="vehicles"
             title={`Vehicles (${vehicles.length})`}
             action={
-              <Link href={`/admin/customers/${c.id}/vehicles/new`} className={pillLink}>
-                <PlusIcon aria-hidden className="size-4" />
-                Add vehicle
-              </Link>
+              ADMIN_READ_ONLY ? undefined : (
+                <Link href={`/admin/customers/${c.id}/vehicles/new`} className={pillLink}>
+                  <PlusIcon aria-hidden className="size-4" />
+                  Add vehicle
+                </Link>
+              )
             }
           >
             {vehicles.length === 0 ? (
@@ -123,8 +129,7 @@ export default async function CustomerProfilePage({ params }: PageProps<"/admin/
                   <li key={v.id} className="flex flex-wrap items-start justify-between gap-3 px-4 py-3">
                     <div className="space-y-0.5">
                       <p className="font-semibold">
-                        {v.make} {v.model}
-                        {v.year ? ` (${v.year})` : ""}
+                        {vehicleName(v)}
                       </p>
                       <p className="font-mono text-body-sm uppercase">{v.registration_number ?? "No registration"}</p>
                       {v.additional_information && (
@@ -135,13 +140,15 @@ export default async function CustomerProfilePage({ params }: PageProps<"/admin/
                         {appointmentsByVehicle.get(v.id) === 1 ? "" : "s"}
                       </p>
                     </div>
-                    <Link
-                      href={`/admin/customers/${c.id}/vehicles/${v.id}/edit`}
-                      className="text-body-sm underline underline-offset-4"
-                      aria-label={`Edit ${v.make} ${v.model}`}
-                    >
-                      Edit
-                    </Link>
+                    {!ADMIN_READ_ONLY && (
+                      <Link
+                        href={`/admin/customers/${c.id}/vehicles/${v.id}/edit`}
+                        className="text-body-sm underline underline-offset-4"
+                        aria-label={`Edit ${vehicleName(v)}`}
+                      >
+                        Edit
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -220,7 +227,7 @@ export default async function CustomerProfilePage({ params }: PageProps<"/admin/
 
         <aside aria-label="Notes and activity" className="space-y-4">
           <h2 className="font-body text-base font-semibold normal-case">Notes and activity</h2>
-          <NoteForm recordId={c.id} action={addCustomerNote} />
+          {!ADMIN_READ_ONLY && <NoteForm recordId={c.id} action={addCustomerNote} />}
           <ActivityTimeline items={activities} showRelated />
         </aside>
       </div>

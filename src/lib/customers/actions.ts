@@ -15,6 +15,7 @@ import {
   type FormResult,
   type VehicleField,
 } from "./schema";
+import { assertAdminWritable } from "@/lib/admin/read-only";
 
 const uuid = z.uuid();
 const GENERIC_ERROR = "Something went wrong. Please try again.";
@@ -41,6 +42,7 @@ const EMAIL_TAKEN = "Another customer already has this email address. Open their
 // -----------------------------------------------------------------------------
 
 export async function createCustomer(input: unknown): Promise<FormResult<CustomerField>> {
+  assertAdminWritable();
   await requireAdmin("/admin/customers/new");
   const parsed = customerFormSchema.safeParse(input);
   if (!parsed.success) {
@@ -86,6 +88,7 @@ export async function createCustomer(input: unknown): Promise<FormResult<Custome
 }
 
 export async function updateCustomer(id: string, input: unknown): Promise<FormResult<CustomerField>> {
+  assertAdminWritable();
   if (!uuid.safeParse(id).success) return { status: "error", message: "This customer no longer exists." };
   await requireAdmin(`/admin/customers/${id}/edit`);
   const parsed = customerFormSchema.safeParse(input);
@@ -129,6 +132,7 @@ const noteSchema = z.object({
 
 /** Internal note on the customer's history (admins only, never shown to customers). */
 export async function addCustomerNote(_: AdminActionState, formData: FormData): Promise<AdminActionState> {
+  assertAdminWritable();
   const admin = await requireAdmin("/admin/customers");
   const parsed = noteSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { status: "error", message: parsed.error.issues[0]?.message ?? "Please check the note." };
@@ -173,6 +177,7 @@ export async function saveVehicle(
   linkAppointmentId: string | null,
   input: unknown,
 ): Promise<FormResult<VehicleField>> {
+  assertAdminWritable();
   if (!uuid.safeParse(customerId).success || (vehicleId && !uuid.safeParse(vehicleId).success)) {
     return { status: "error", message: "This vehicle no longer exists." };
   }

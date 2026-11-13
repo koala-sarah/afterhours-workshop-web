@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarClockIcon, LayoutDashboardIcon, UsersIcon } from "lucide-react";
+import { CalendarClockIcon, InboxIcon, UsersIcon } from "lucide-react";
 import { cn } from "cn";
 
-// Sections are added here as each build stage lands (customers, enquiries, ...).
+// Read-only backup list (spec section 6). Requests first: that is what the operator checks.
 const items = [
-  { href: "/admin", label: "Overview", icon: LayoutDashboardIcon },
+  { href: "/admin", label: "Requests", icon: InboxIcon },
   { href: "/admin/appointments", label: "Appointments", icon: CalendarClockIcon },
   { href: "/admin/customers", label: "Customers", icon: UsersIcon },
 ] as const;

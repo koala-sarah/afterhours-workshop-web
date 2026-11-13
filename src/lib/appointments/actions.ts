@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { requireAdmin } from "@/lib/auth/dal";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { assertAdminWritable } from "@/lib/admin/read-only";
 
 export type AdminActionState = { status: "idle" | "success" | "error"; message?: string };
 
@@ -82,6 +83,7 @@ async function run<K extends Kind>(
 }
 
 export async function approveAppointment(_: AdminActionState, formData: FormData) {
+  assertAdminWritable();
   return run("approve", formData, (supabase, v) =>
     supabase.rpc("approve_appointment", {
       p_appointment_id: v.id,
@@ -94,12 +96,14 @@ export async function approveAppointment(_: AdminActionState, formData: FormData
 }
 
 export async function declineAppointment(_: AdminActionState, formData: FormData) {
+  assertAdminWritable();
   return run("decline", formData, (supabase, v) =>
     supabase.rpc("decline_appointment", { p_appointment_id: v.id, p_reason: v.reason }),
   );
 }
 
 export async function proposeAppointmentTime(_: AdminActionState, formData: FormData) {
+  assertAdminWritable();
   return run("propose", formData, (supabase, v) =>
     supabase.rpc("propose_appointment_time", {
       p_appointment_id: v.id,
@@ -112,6 +116,7 @@ export async function proposeAppointmentTime(_: AdminActionState, formData: Form
 }
 
 export async function updateAppointmentStatus(_: AdminActionState, formData: FormData) {
+  assertAdminWritable();
   return run("status", formData, (supabase, v) =>
     supabase.rpc("update_appointment_status", {
       p_appointment_id: v.id,
@@ -122,6 +127,7 @@ export async function updateAppointmentStatus(_: AdminActionState, formData: For
 }
 
 export async function addAppointmentNote(_: AdminActionState, formData: FormData) {
+  assertAdminWritable();
   return run("note", formData, (supabase, v) =>
     supabase.rpc("add_appointment_note", { p_appointment_id: v.id, p_note: v.note }),
   );
@@ -129,6 +135,7 @@ export async function addAppointmentNote(_: AdminActionState, formData: FormData
 
 /** Link the appointment to another of the same customer's vehicles. */
 export async function setAppointmentVehicle(_: AdminActionState, formData: FormData) {
+  assertAdminWritable();
   return run("vehicle", formData, (supabase, v) =>
     supabase.rpc("set_appointment_vehicle", { p_appointment_id: v.id, p_vehicle_id: v.vehicleId }),
   );

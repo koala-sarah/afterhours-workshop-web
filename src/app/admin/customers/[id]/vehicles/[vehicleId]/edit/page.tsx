@@ -7,12 +7,14 @@ import { isUuid } from "@/lib/admin/ids";
 import { requireAdmin } from "@/lib/auth/dal";
 import { saveVehicle } from "@/lib/customers/actions";
 import { getCustomer, getVehicle } from "@/lib/customers/queries";
+import { ADMIN_READ_ONLY } from "@/config/admin";
 
 export const metadata: Metadata = { title: "Edit vehicle" };
 
 export default async function EditVehiclePage({ params }: PageProps<"/admin/customers/[id]/vehicles/[vehicleId]/edit">) {
   const { id, vehicleId } = await params;
   await requireAdmin(`/admin/customers/${id}/vehicles/${vehicleId}/edit`);
+  if (ADMIN_READ_ONLY) notFound(); // read-only backup list (spec section 6)
   if (!isUuid(id) || !isUuid(vehicleId)) notFound();
   const [customer, vehicle] = await Promise.all([getCustomer(id), getVehicle(id, vehicleId)]);
   if (!customer || !vehicle) notFound();

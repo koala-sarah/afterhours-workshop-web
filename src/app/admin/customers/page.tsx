@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { formatDateTime } from "@/lib/appointments/format";
 import { requireAdmin } from "@/lib/auth/dal";
 import { CUSTOMER_PAGE_SIZE, listCustomers } from "@/lib/customers/queries";
+import { ADMIN_READ_ONLY } from "@/config/admin";
 
 export const metadata: Metadata = { title: "Customers" };
 
@@ -32,13 +33,15 @@ export default async function CustomersListPage({ searchParams }: PageProps<"/ad
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-wrap items-center gap-4">
           <h1 className="text-h3">Customers</h1>
-          <Link
-            href="/admin/customers/new"
-            className="inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-body-sm hover:bg-muted"
-          >
-            <PlusIcon aria-hidden className="size-4" />
-            New customer
-          </Link>
+          {!ADMIN_READ_ONLY && (
+            <Link
+              href="/admin/customers/new"
+              className="inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-body-sm hover:bg-muted"
+            >
+              <PlusIcon aria-hidden className="size-4" />
+              New customer
+            </Link>
+          )}
         </div>
         <form action="/admin/customers" className="flex w-full max-w-md gap-2" role="search">
           <label htmlFor="q" className="sr-only">

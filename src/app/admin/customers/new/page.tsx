@@ -4,11 +4,14 @@ import { BackLink } from "@/components/admin/back-link";
 import { CustomerForm } from "@/components/admin/customer-form";
 import { requireAdmin } from "@/lib/auth/dal";
 import { createCustomer } from "@/lib/customers/actions";
+import { ADMIN_READ_ONLY } from "@/config/admin";
+import { notFound } from "next/navigation";
 
 export const metadata: Metadata = { title: "New customer" };
 
 export default async function NewCustomerPage() {
   await requireAdmin("/admin/customers/new");
+  if (ADMIN_READ_ONLY) notFound(); // read-only backup list (spec section 6)
   return (
     <div className="space-y-6">
       <div className="space-y-3">

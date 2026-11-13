@@ -7,12 +7,14 @@ import { isUuid } from "@/lib/admin/ids";
 import { requireAdmin } from "@/lib/auth/dal";
 import { updateCustomer } from "@/lib/customers/actions";
 import { getCustomer } from "@/lib/customers/queries";
+import { ADMIN_READ_ONLY } from "@/config/admin";
 
 export const metadata: Metadata = { title: "Edit customer" };
 
 export default async function EditCustomerPage({ params }: PageProps<"/admin/customers/[id]/edit">) {
   const { id } = await params;
   await requireAdmin(`/admin/customers/${id}/edit`);
+  if (ADMIN_READ_ONLY) notFound(); // read-only backup list (spec section 6)
   if (!isUuid(id)) notFound();
   const customer = await getCustomer(id);
   if (!customer) notFound();
