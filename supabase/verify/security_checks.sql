@@ -833,7 +833,8 @@ begin
      or v_entry.vehicle_id is null then
     raise exception 'FAIL: finished request not linked to customer / vehicle';
   end if;
-  if (select count(*) from public.notifications where entry_id = v_entry.id and kind = 'NEW_REQUEST') <> 1 then
+  -- One alert per channel (Telegram, email).
+  if (select count(*) from public.notifications where entry_id = v_entry.id and kind = 'NEW_REQUEST') <> 2 then
     raise exception 'FAIL: finished request did not queue one notification';
   end if;
 
@@ -905,7 +906,7 @@ begin
   end if;
   select * into v_entry from public.inbox_entries where id = v_id;
   if v_entry.message <> 'Do you do WOFs?' or v_entry.completed_at is null
-     or (select count(*) from public.notifications where entry_id = v_id) <> 1
+     or (select count(*) from public.notifications where entry_id = v_id) <> 2
      or (select customer_id from public.inbox_items where id = v_entry.item_id) is null then
     raise exception 'FAIL: contact form entry incomplete';
   end if;
@@ -965,13 +966,13 @@ begin
   if v_entry.abandoned_at is null or v_entry.last_step <> 'contact' then
     raise exception 'FAIL: abandoned step not recorded';
   end if;
-  if (select count(*) from public.notifications where entry_id = v_entry.id and kind = 'ABANDONED_REQUEST') <> 1 then
+  if (select count(*) from public.notifications where entry_id = v_entry.id and kind = 'ABANDONED_REQUEST') <> 2 then
     raise exception 'FAIL: abandoned request did not queue a notification';
   end if;
   -- Running again changes nothing and never queues a second notification.
   v_result := public.run_intake_maintenance();
   if (v_result ->> 'abandoned')::integer <> 0
-     or (select count(*) from public.notifications where entry_id = v_entry.id) <> 1 then
+     or (select count(*) from public.notifications where entry_id = v_entry.id) <> 2 then
     raise exception 'FAIL: maintenance is not idempotent';
   end if;
 end $$;
@@ -1129,6 +1130,81 @@ begin
   if (select count(*) from public.notifications) < 3 then
     raise exception 'FAIL: admin cannot read notifications';
   end if;
+end $$;
+
+reset role;
+
+-- 7f. One-screen request form and chat rules (Build 11).
+set local role service_role;
+select set_config('request.jwt.claims', '{"role":"service_role"}', true);
+
+do $$
+declare
+  v_id uuid;
+  v_entry public.inbox_entries;
+  v_vehicle public.vehicles;
+  v_err text;
+  v_case jsonb;
+begin
+  -- Registration only: saved, linked to a registration-only vehicle.
+  v_id := public.submit_inbox_form('FORM',
+    '{"problem":{"category":"Brakes","text":"squeal"},"contact":{"name":"Tama","phone":"021 777 8888"},"vehicle":{"registration":"tam 42"},"reach":{"method":"SMS","times":["Weekend"]}}',
+    'form-v1', 'fp-form-000000000002');
+  select * into v_entry from public.inbox_entries where id = v_id;
+  select * into v_vehicle from public.vehicles where id = v_entry.vehicle_id;
+  if v_entry.kind <> 'FORM' or v_entry.symptom_category <> 'Brakes' or v_entry.symptom_text <> 'squeal'
+     or v_entry.vehicle_registration <> 'tam 42' or v_entry.registration_unknown
+     or v_entry.preferred_method <> 'SMS' or v_entry.preferred_times <> array['Weekend']
+     or v_vehicle.registration_normalized <> 'TAM42' or v_vehicle.make is not null then
+    raise exception 'FAIL: form entry or registration-only vehicle wrong: %', row_to_json(v_entry);
+  end if;
+  if (select count(*) from public.notifications where entry_id = v_id) <> 2
+     or (select count(distinct channel) from public.notifications where entry_id = v_id) <> 2 then
+    raise exception 'FAIL: form did not queue one Telegram and one email notification';
+  end if;
+
+  -- "I'm not sure" registration: allowed, no vehicle.
+  v_id := public.submit_inbox_form('FORM',
+    '{"problem":{"category":"Not sure"},"contact":{"name":"Hine","phone":"021 999 0000"},"vehicle":{"registration":null,"registration_unknown":true},"reach":{"method":"PHONE"}}',
+    'form-v1', 'fp-form-000000000002');
+  select * into v_entry from public.inbox_entries where id = v_id;
+  if not v_entry.registration_unknown or v_entry.vehicle_id is not null then
+    raise exception 'FAIL: unknown registration not handled';
+  end if;
+
+  -- Required fields on the form.
+  foreach v_case in array array[
+    '{"expect":"invalid_registration","a":{"contact":{"name":"A","phone":"021 111 2222"},"vehicle":{},"reach":{"method":"PHONE"}}}'::jsonb,
+    '{"expect":"invalid_phone","a":{"contact":{"name":"A","email":"a@example.com"},"vehicle":{"registration":"ABC1"},"reach":{"method":"PHONE"}}}'::jsonb,
+    '{"expect":"invalid_method","a":{"contact":{"name":"A","phone":"021 111 2222"},"vehicle":{"registration":"ABC1"},"reach":{}}}'::jsonb,
+    '{"expect":"invalid_email","a":{"contact":{"name":"A","phone":"021 111 2222"},"vehicle":{"registration":"ABC1"},"reach":{"method":"EMAIL"}}}'::jsonb
+  ] loop
+    begin
+      perform public.submit_inbox_form('FORM', v_case -> 'a', 'form-v1', 'fp-form-000000000003');
+      raise exception 'FAIL: form accepted without a required field (%)', v_case ->> 'expect';
+    exception when sqlstate 'P0001' then
+      get stacked diagnostics v_err = message_text;
+      if v_err <> v_case ->> 'expect' then
+        raise exception 'FAIL: expected %, got %', v_case ->> 'expect', v_err;
+      end if;
+    end;
+  end loop;
+
+  -- The chat needs a phone number at the contact step.
+  perform public.intake_start(repeat('5', 64), 'fp-intake-0000000005', 'v1');
+  begin
+    perform public.intake_save_step(repeat('5', 64), 'contact', '{"contact":{"name":"Ana","email":"ana@example.com"}}');
+    raise exception 'FAIL: chat accepted contact without a phone';
+  exception when sqlstate 'P0001' then
+    if sqlerrm <> 'invalid_phone' then raise exception 'FAIL: expected invalid_phone, got %', sqlerrm; end if;
+  end;
+
+  -- A vehicle can never be completely empty.
+  begin
+    insert into public.vehicles (customer_id) values ((select id from public.customers limit 1));
+    raise exception 'FAIL: empty vehicle accepted';
+  exception when check_violation then null;
+  end;
 end $$;
 
 reset role;

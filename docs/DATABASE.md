@@ -18,6 +18,7 @@ Supabase Postgres 17. Everything is defined in version-controlled migrations in 
 | `…1020_intake_functions.sql` | `intake_start`, `intake_save_step`, `submit_inbox_form` (server only) |
 | `…1030_inbox_admin_functions.sql` | `set_inbox_status`, `log_inbox_contact`, `add_inbox_note`, `approve_from_inbox` |
 | `…1040_notifications_and_jobs.sql` | `notifications` queue, sender functions, maintenance job (pg_cron every 5 minutes) |
+| `…1050_request_form_and_telegram.sql` | Registration-only vehicles (make/model optional), new answer shape for the request form and chat, required form fields, one notification per channel (TELEGRAM, EMAIL) |
 
 `supabase/seed.sql` adds one sample contact-form message for **local development only**.
 
@@ -27,11 +28,11 @@ Supabase Postgres 17. Everything is defined in version-controlled migrations in 
 |---|---|
 | `profiles` | One per Supabase Auth user. `role` is `USER` (no access) or `ADMIN`. |
 | `customers` | One per person. Unique on normalised email; phone normalised for matching (`(027) 770-0486` = `+64 27 770 0486`). |
-| `vehicles` | Many per customer. Unique per customer on normalised registration (`abc 123` = `ABC-123`). |
+| `vehicles` | Many per customer. Unique per customer on normalised registration (`abc 123` = `ABC-123`). Make and model are optional (the request form only asks for the registration), but a vehicle always has at least one of make, model or registration. |
 | `services` | Public catalogue shown on the website. |
 | `inbox_items` | One admin Inbox card. Status `NEW`, `NEEDS_REPLY`, `DONE`. Open cards are grouped by normalised phone (or email when there is no phone). |
 | `inbox_entries` | Everything on a card: chat intake, form, contact message; later WhatsApp / SMS messages and call summaries (`channel`, `summary`, `source_phone`, `external_id`). |
-| `notifications` | Operator email queue, one row per new request. Status `PENDING`, `SENT`, `FAILED`, `SKIPPED`. |
+| `notifications` | Operator alerts, one row per request and channel (`TELEGRAM`, `EMAIL`). Status `PENDING`, `SENT`, `FAILED`, `SKIPPED`. |
 | `enquiries` | **Legacy.** Old contact-form messages, copied into the Inbox (`inbox_entries.legacy_enquiry_id`). The app no longer creates them. |
 | `appointments` | Bookings. Status `PENDING`, `APPROVED`, `DECLINED`, `RESCHEDULE_REQUESTED`, `CANCELLED`, `COMPLETED`. `service_id` is optional; `inbox_item_id` links a booking approved from the Inbox. |
 | `follow_up_tasks` | **Dormant** (no UI; the `NEEDS_REPLY` status replaces it). Kept for future reminders; has an optional `inbox_item_id`. |
@@ -139,21 +140,21 @@ The website keeps a random token in an httpOnly cookie and sends its SHA-256 (`t
 | `intake_save_step(token_hash, step, answers, complete?)` | Merges `answers` into the session (each step owns a top-level key). Once a name and phone/email are present, an `inbox_entries` row exists, so the request reaches the Inbox even if the customer leaves. `complete = true` finishes it, links the customer and vehicle, and queues the notification. Returns `{entry_created, has_contact, completed}`. |
 | `submit_inbox_form(kind, answers, flow_version?, fingerprint?)` | One-shot `FORM` (secondary request form) or `CONTACT_FORM` (needs `message`). The same message within 10 minutes returns the existing entry. Throttle bucket `inbox_form`. |
 
-Answers shape (values the customer was not sure about are `null`):
+Answers shape, shared by the request form and the chat (values the customer was not sure about are `null`):
 
 ```json
 {
-  "symptom":  { "category": "…", "text": "…" },
+  "problem":  { "category": "…", "text": "…" },
   "contact":  { "name": "…", "phone": "…", "email": "…" },
-  "vehicle":  { "make": "…", "model": "…", "year": "2012", "registration": "…" },
-  "details":  ["…"],
-  "drivable": "YES | NO | UNSURE",
+  "vehicle":  { "registration": "…", "registration_unknown": false },
   "reach":    { "method": "PHONE | WHATSAPP | SMS | EMAIL", "times": ["…"] },
   "message":  "… (contact form)"
 }
 ```
 
-The card fields (`symptom_category`, `drivable`, `vehicle_*`, `preferred_method`, `preferred_times`, `message`) are copied from the answers; the raw answers and `flow_version` are kept on the entry.
+The list fields are copied from the answers: `symptom_category` / `symptom_text` (the problem button and note), `vehicle_registration`, `registration_unknown`, `preferred_method`, `preferred_times`, `message`. The raw answers and `flow_version` are kept on the entry. (Older keys `symptom`, `vehicle.make/model/year`, `drivable` are still read.)
+
+Required: the chat needs a phone number at the contact step. The `FORM` kind needs a name, a phone, a registration (or `registration_unknown: true`), a contact method, and an email when the method is `EMAIL`. A registration alone creates a vehicle for the customer.
 
 Rules:
 
@@ -163,7 +164,7 @@ Rules:
 - **Retention:** sessions older than `intake_retention_days` (30) are deleted. Sessions that never got contact details leave nothing behind.
 - Nothing here confirms a booking.
 
-Error codes: `invalid_name`, `invalid_email`, `invalid_phone`, `invalid_message`, `invalid_input`, `invalid_kind`, `contact_required`, `session_not_found`, `session_completed`, `session_expired`, `too_many_requests`.
+Error codes: `invalid_name`, `invalid_email`, `invalid_phone`, `invalid_registration`, `invalid_method`, `invalid_message`, `invalid_input`, `invalid_kind`, `contact_required`, `session_not_found`, `session_completed`, `session_expired`, `too_many_requests`.
 
 ### Admin Inbox
 
@@ -180,7 +181,7 @@ Extra error codes: `already_booked`, `contact_required`, `slot_conflict`, `past_
 
 ### Notifications and maintenance
 
-- A finished request, or an abandoned chat with contact details, inserts one `notifications` row in the same transaction (unique `entry_id`: at most one per request). Sending happens later on the server; failure never touches the request.
+- A finished request, or an abandoned chat with contact details, inserts one `notifications` row per channel (`TELEGRAM`, `EMAIL`) in the same transaction (unique `(entry_id, channel)`: at most one alert per request and channel). A channel that isn't configured is finished as `SKIPPED`. Sending happens later on the server; failure never touches the request.
 - Server sender (service_role only): `claim_notifications(limit)` hands out due rows once (each claim is an attempt with back-off; gives up after 5), then `finish_notification(id, SENT / FAILED / SKIPPED, error?, recipients?)`.
 - `private.run_intake_maintenance()` marks abandoned chats and deletes old sessions. It runs every 5 minutes with **pg_cron** (job `inbox-maintenance`, enabled by migration 1040 when pg_cron is available). The server can also call `public.run_intake_maintenance()`.
 

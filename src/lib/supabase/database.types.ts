@@ -238,14 +238,14 @@ isOneToOne: false
                   ]
                 },"inbox_entries": {
                   Row: {
-                    "abandoned_at": string | null,"answers": NonNullable<Json>,"channel": Database["public"]['Enums']["inbox_channel"],"completed_at": string | null,"contact_email": string | null,"contact_name": string | null,"contact_phone": string | null,"created_at": string,"drivable": string | null,"external_id": string | null,"flow_version": string | null,"id": string,"item_id": string,"kind": Database["public"]['Enums']["inbox_entry_kind"],"last_step": string | null,"legacy_enquiry_id": string | null,"message": string | null,"preferred_method": Database["public"]['Enums']["contact_method"] | null,"preferred_times": (string)[],"source_phone": string | null,"summary": string | null,"symptom_category": string | null,"symptom_text": string | null,"updated_at": string,"vehicle_id": string | null,"vehicle_make": string | null,"vehicle_model": string | null,"vehicle_registration": string | null,"vehicle_year": number | null
+                    "abandoned_at": string | null,"answers": NonNullable<Json>,"channel": Database["public"]['Enums']["inbox_channel"],"completed_at": string | null,"contact_email": string | null,"contact_name": string | null,"contact_phone": string | null,"created_at": string,"drivable": string | null,"external_id": string | null,"flow_version": string | null,"id": string,"item_id": string,"kind": Database["public"]['Enums']["inbox_entry_kind"],"last_step": string | null,"legacy_enquiry_id": string | null,"message": string | null,"preferred_method": Database["public"]['Enums']["contact_method"] | null,"preferred_times": (string)[],"registration_unknown": boolean,"source_phone": string | null,"summary": string | null,"symptom_category": string | null,"symptom_text": string | null,"updated_at": string,"vehicle_id": string | null,"vehicle_make": string | null,"vehicle_model": string | null,"vehicle_registration": string | null,"vehicle_year": number | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "abandoned_at"?: string | null,"answers"?: NonNullable<Json>,"channel"?: Database["public"]['Enums']["inbox_channel"],"completed_at"?: string | null,"contact_email"?: string | null,"contact_name"?: string | null,"contact_phone"?: string | null,"created_at"?: string,"drivable"?: string | null,"external_id"?: string | null,"flow_version"?: string | null,"id"?: string,"item_id": string,"kind": Database["public"]['Enums']["inbox_entry_kind"],"last_step"?: string | null,"legacy_enquiry_id"?: string | null,"message"?: string | null,"preferred_method"?: Database["public"]['Enums']["contact_method"] | null,"preferred_times"?: (string)[],"source_phone"?: string | null,"summary"?: string | null,"symptom_category"?: string | null,"symptom_text"?: string | null,"updated_at"?: string,"vehicle_id"?: string | null,"vehicle_make"?: string | null,"vehicle_model"?: string | null,"vehicle_registration"?: string | null,"vehicle_year"?: number | null
+                    "abandoned_at"?: string | null,"answers"?: NonNullable<Json>,"channel"?: Database["public"]['Enums']["inbox_channel"],"completed_at"?: string | null,"contact_email"?: string | null,"contact_name"?: string | null,"contact_phone"?: string | null,"created_at"?: string,"drivable"?: string | null,"external_id"?: string | null,"flow_version"?: string | null,"id"?: string,"item_id": string,"kind": Database["public"]['Enums']["inbox_entry_kind"],"last_step"?: string | null,"legacy_enquiry_id"?: string | null,"message"?: string | null,"preferred_method"?: Database["public"]['Enums']["contact_method"] | null,"preferred_times"?: (string)[],"registration_unknown"?: boolean,"source_phone"?: string | null,"summary"?: string | null,"symptom_category"?: string | null,"symptom_text"?: string | null,"updated_at"?: string,"vehicle_id"?: string | null,"vehicle_make"?: string | null,"vehicle_model"?: string | null,"vehicle_registration"?: string | null,"vehicle_year"?: number | null
                   }
                   Update: {
-                    "abandoned_at"?: string | null,"answers"?: NonNullable<Json>,"channel"?: Database["public"]['Enums']["inbox_channel"],"completed_at"?: string | null,"contact_email"?: string | null,"contact_name"?: string | null,"contact_phone"?: string | null,"created_at"?: string,"drivable"?: string | null,"external_id"?: string | null,"flow_version"?: string | null,"id"?: string,"item_id"?: string,"kind"?: Database["public"]['Enums']["inbox_entry_kind"],"last_step"?: string | null,"legacy_enquiry_id"?: string | null,"message"?: string | null,"preferred_method"?: Database["public"]['Enums']["contact_method"] | null,"preferred_times"?: (string)[],"source_phone"?: string | null,"summary"?: string | null,"symptom_category"?: string | null,"symptom_text"?: string | null,"updated_at"?: string,"vehicle_id"?: string | null,"vehicle_make"?: string | null,"vehicle_model"?: string | null,"vehicle_registration"?: string | null,"vehicle_year"?: number | null
+                    "abandoned_at"?: string | null,"answers"?: NonNullable<Json>,"channel"?: Database["public"]['Enums']["inbox_channel"],"completed_at"?: string | null,"contact_email"?: string | null,"contact_name"?: string | null,"contact_phone"?: string | null,"created_at"?: string,"drivable"?: string | null,"external_id"?: string | null,"flow_version"?: string | null,"id"?: string,"item_id"?: string,"kind"?: Database["public"]['Enums']["inbox_entry_kind"],"last_step"?: string | null,"legacy_enquiry_id"?: string | null,"message"?: string | null,"preferred_method"?: Database["public"]['Enums']["contact_method"] | null,"preferred_times"?: (string)[],"registration_unknown"?: boolean,"source_phone"?: string | null,"summary"?: string | null,"symptom_category"?: string | null,"symptom_text"?: string | null,"updated_at"?: string,"vehicle_id"?: string | null,"vehicle_make"?: string | null,"vehicle_model"?: string | null,"vehicle_registration"?: string | null,"vehicle_year"?: number | null
                   }
                   Relationships: [
                     {
@@ -320,26 +320,26 @@ isOneToOne: false
                   ]
                 },"notifications": {
                   Row: {
-                    "attempts": number,"created_at": string,"entry_id": string,"id": string,"item_id": string,"kind": string,"last_error": string | null,"next_attempt_at": string,"recipients": (string)[],"sent_at": string | null,"status": Database["public"]['Enums']["notification_status"],"updated_at": string
+                    "attempts": number,"channel": Database["public"]['Enums']["notification_channel"],"created_at": string,"entry_id": string,"id": string,"item_id": string,"kind": string,"last_error": string | null,"next_attempt_at": string,"recipients": (string)[],"sent_at": string | null,"status": Database["public"]['Enums']["notification_status"],"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "attempts"?: number,"created_at"?: string,"entry_id": string,"id"?: string,"item_id": string,"kind": string,"last_error"?: string | null,"next_attempt_at"?: string,"recipients"?: (string)[],"sent_at"?: string | null,"status"?: Database["public"]['Enums']["notification_status"],"updated_at"?: string
+                    "attempts"?: number,"channel": Database["public"]['Enums']["notification_channel"],"created_at"?: string,"entry_id": string,"id"?: string,"item_id": string,"kind": string,"last_error"?: string | null,"next_attempt_at"?: string,"recipients"?: (string)[],"sent_at"?: string | null,"status"?: Database["public"]['Enums']["notification_status"],"updated_at"?: string
                   }
                   Update: {
-                    "attempts"?: number,"created_at"?: string,"entry_id"?: string,"id"?: string,"item_id"?: string,"kind"?: string,"last_error"?: string | null,"next_attempt_at"?: string,"recipients"?: (string)[],"sent_at"?: string | null,"status"?: Database["public"]['Enums']["notification_status"],"updated_at"?: string
+                    "attempts"?: number,"channel"?: Database["public"]['Enums']["notification_channel"],"created_at"?: string,"entry_id"?: string,"id"?: string,"item_id"?: string,"kind"?: string,"last_error"?: string | null,"next_attempt_at"?: string,"recipients"?: (string)[],"sent_at"?: string | null,"status"?: Database["public"]['Enums']["notification_status"],"updated_at"?: string
                   }
                   Relationships: [
                     {
       foreignKeyName: "notifications_entry_id_fkey"
       columns: ["entry_id"]
-isOneToOne: true
+isOneToOne: false
       referencedRelation: "admin_inbox"
       referencedColumns: ["entry_id"]
     },{
       foreignKeyName: "notifications_entry_id_fkey"
       columns: ["entry_id"]
-isOneToOne: true
+isOneToOne: false
       referencedRelation: "inbox_entries"
       referencedColumns: ["id"]
     },{
@@ -386,14 +386,14 @@ isOneToOne: false
                   ]
                 },"vehicles": {
                   Row: {
-                    "additional_information": string | null,"created_at": string,"customer_id": string,"id": string,"make": string,"model": string,"registration_normalized": string | null,"registration_number": string | null,"updated_at": string,"year": number | null
+                    "additional_information": string | null,"created_at": string,"customer_id": string,"id": string,"make": string | null,"model": string | null,"registration_normalized": string | null,"registration_number": string | null,"updated_at": string,"year": number | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "additional_information"?: string | null,"created_at"?: string,"customer_id": string,"id"?: string,"make": string,"model": string,"registration_normalized"?: never,"registration_number"?: string | null,"updated_at"?: string,"year"?: number | null
+                    "additional_information"?: string | null,"created_at"?: string,"customer_id": string,"id"?: string,"make"?: string | null,"model"?: string | null,"registration_normalized"?: never,"registration_number"?: string | null,"updated_at"?: string,"year"?: number | null
                   }
                   Update: {
-                    "additional_information"?: string | null,"created_at"?: string,"customer_id"?: string,"id"?: string,"make"?: string,"model"?: string,"registration_normalized"?: never,"registration_number"?: string | null,"updated_at"?: string,"year"?: number | null
+                    "additional_information"?: string | null,"created_at"?: string,"customer_id"?: string,"id"?: string,"make"?: string | null,"model"?: string | null,"registration_normalized"?: never,"registration_number"?: string | null,"updated_at"?: string,"year"?: number | null
                   }
                   Relationships: [
                     {
@@ -461,7 +461,7 @@ isOneToOne: false
                   ]
                 },"admin_inbox": {
                   Row: {
-                    "abandoned_at": string | null,"appointment_id": string | null,"channel": Database["public"]['Enums']["inbox_channel"] | null,"completed_at": string | null,"contact_email": string | null,"contact_name": string | null,"contact_phone": string | null,"created_at": string,"customer_id": string | null,"customer_name": string | null,"drivable": string | null,"email_normalized": string | null,"entry_count": number | null,"entry_created_at": string | null,"entry_id": string | null,"id": string,"kind": Database["public"]['Enums']["inbox_entry_kind"] | null,"last_entry_at": string,"last_step": string | null,"message": string | null,"phone_normalized": string | null,"preferred_method": Database["public"]['Enums']["contact_method"] | null,"preferred_times": (string)[] | null,"status": Database["public"]['Enums']["inbox_status"],"status_changed_at": string,"summary": string | null,"symptom_category": string | null,"symptom_text": string | null,"vehicle_make": string | null,"vehicle_model": string | null,"vehicle_registration": string | null,"vehicle_year": number | null
+                    "abandoned_at": string | null,"appointment_id": string | null,"channel": Database["public"]['Enums']["inbox_channel"] | null,"completed_at": string | null,"contact_email": string | null,"contact_name": string | null,"contact_phone": string | null,"created_at": string,"customer_id": string | null,"customer_name": string | null,"drivable": string | null,"email_normalized": string | null,"entry_count": number | null,"entry_created_at": string | null,"entry_id": string | null,"id": string,"kind": Database["public"]['Enums']["inbox_entry_kind"] | null,"last_entry_at": string,"last_step": string | null,"message": string | null,"phone_normalized": string | null,"preferred_method": Database["public"]['Enums']["contact_method"] | null,"preferred_times": (string)[] | null,"registration_unknown": boolean | null,"status": Database["public"]['Enums']["inbox_status"],"status_changed_at": string,"summary": string | null,"symptom_category": string | null,"symptom_text": string | null,"vehicle_make": string | null,"vehicle_model": string | null,"vehicle_registration": string | null,"vehicle_year": number | null
                   }
                   ComputedFields: never
                   Relationships: [
@@ -509,6 +509,7 @@ isOneToOne: false
 "claim_notifications":
 { Args: { "p_limit"?: number }; Returns: {
               "attempts": number,
+"channel": Database["public"]['Enums']["notification_channel"],
 "created_at": string,
 "entry_id": string,
 "id": string,
@@ -568,7 +569,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "app_role": "USER"|"ADMIN","appointment_status": "PENDING"|"APPROVED"|"DECLINED"|"RESCHEDULE_REQUESTED"|"CANCELLED"|"COMPLETED","contact_method": "PHONE"|"WHATSAPP"|"SMS"|"EMAIL","enquiry_status": "NEW"|"IN_PROGRESS"|"CONVERTED"|"CLOSED","inbox_channel": "WEB"|"PHONE"|"WHATSAPP"|"SMS"|"EMAIL","inbox_entry_kind": "INTAKE"|"FORM"|"CONTACT_FORM"|"MESSAGE"|"CALL"|"LEGACY","inbox_status": "NEW"|"NEEDS_REPLY"|"DONE","notification_status": "PENDING"|"SENT"|"FAILED"|"SKIPPED","related_type": "CUSTOMER"|"VEHICLE"|"APPOINTMENT"|"ENQUIRY"|"FOLLOW_UP_TASK"|"INBOX_ITEM","request_source": "WEBSITE"|"PHONE"|"EMAIL"|"WALK_IN"|"OTHER","task_priority": "LOW"|"MEDIUM"|"HIGH","task_status": "PENDING"|"IN_PROGRESS"|"COMPLETED"|"CANCELLED"
+            "app_role": "USER"|"ADMIN","appointment_status": "PENDING"|"APPROVED"|"DECLINED"|"RESCHEDULE_REQUESTED"|"CANCELLED"|"COMPLETED","contact_method": "PHONE"|"WHATSAPP"|"SMS"|"EMAIL","enquiry_status": "NEW"|"IN_PROGRESS"|"CONVERTED"|"CLOSED","inbox_channel": "WEB"|"PHONE"|"WHATSAPP"|"SMS"|"EMAIL","inbox_entry_kind": "INTAKE"|"FORM"|"CONTACT_FORM"|"MESSAGE"|"CALL"|"LEGACY","inbox_status": "NEW"|"NEEDS_REPLY"|"DONE","notification_channel": "TELEGRAM"|"EMAIL","notification_status": "PENDING"|"SENT"|"FAILED"|"SKIPPED","related_type": "CUSTOMER"|"VEHICLE"|"APPOINTMENT"|"ENQUIRY"|"FOLLOW_UP_TASK"|"INBOX_ITEM","request_source": "WEBSITE"|"PHONE"|"EMAIL"|"WALK_IN"|"OTHER","task_priority": "LOW"|"MEDIUM"|"HIGH","task_status": "PENDING"|"IN_PROGRESS"|"COMPLETED"|"CANCELLED"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -684,7 +685,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "app_role": ["USER", "ADMIN"],"appointment_status": ["PENDING", "APPROVED", "DECLINED", "RESCHEDULE_REQUESTED", "CANCELLED", "COMPLETED"],"contact_method": ["PHONE", "WHATSAPP", "SMS", "EMAIL"],"enquiry_status": ["NEW", "IN_PROGRESS", "CONVERTED", "CLOSED"],"inbox_channel": ["WEB", "PHONE", "WHATSAPP", "SMS", "EMAIL"],"inbox_entry_kind": ["INTAKE", "FORM", "CONTACT_FORM", "MESSAGE", "CALL", "LEGACY"],"inbox_status": ["NEW", "NEEDS_REPLY", "DONE"],"notification_status": ["PENDING", "SENT", "FAILED", "SKIPPED"],"related_type": ["CUSTOMER", "VEHICLE", "APPOINTMENT", "ENQUIRY", "FOLLOW_UP_TASK", "INBOX_ITEM"],"request_source": ["WEBSITE", "PHONE", "EMAIL", "WALK_IN", "OTHER"],"task_priority": ["LOW", "MEDIUM", "HIGH"],"task_status": ["PENDING", "IN_PROGRESS", "COMPLETED", "CANCELLED"]
+            "app_role": ["USER", "ADMIN"],"appointment_status": ["PENDING", "APPROVED", "DECLINED", "RESCHEDULE_REQUESTED", "CANCELLED", "COMPLETED"],"contact_method": ["PHONE", "WHATSAPP", "SMS", "EMAIL"],"enquiry_status": ["NEW", "IN_PROGRESS", "CONVERTED", "CLOSED"],"inbox_channel": ["WEB", "PHONE", "WHATSAPP", "SMS", "EMAIL"],"inbox_entry_kind": ["INTAKE", "FORM", "CONTACT_FORM", "MESSAGE", "CALL", "LEGACY"],"inbox_status": ["NEW", "NEEDS_REPLY", "DONE"],"notification_channel": ["TELEGRAM", "EMAIL"],"notification_status": ["PENDING", "SENT", "FAILED", "SKIPPED"],"related_type": ["CUSTOMER", "VEHICLE", "APPOINTMENT", "ENQUIRY", "FOLLOW_UP_TASK", "INBOX_ITEM"],"request_source": ["WEBSITE", "PHONE", "EMAIL", "WALK_IN", "OTHER"],"task_priority": ["LOW", "MEDIUM", "HIGH"],"task_status": ["PENDING", "IN_PROGRESS", "COMPLETED", "CANCELLED"]
           }
         }
 } as const

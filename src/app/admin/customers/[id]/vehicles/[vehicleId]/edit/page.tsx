@@ -25,8 +25,8 @@ export default async function EditVehiclePage({ params }: PageProps<"/admin/cust
       </div>
       <VehicleForm
         defaultValues={{
-          make: vehicle.make,
-          model: vehicle.model,
+          make: vehicle.make ?? "",
+          model: vehicle.model ?? "",
           year: vehicle.year ? String(vehicle.year) : "",
           registrationNumber: vehicle.registration_number ?? "",
           additionalInformation: vehicle.additional_information ?? "",

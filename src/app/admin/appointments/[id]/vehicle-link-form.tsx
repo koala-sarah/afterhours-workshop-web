@@ -7,7 +7,7 @@ import { adminInputClass } from "@/components/admin/fields";
 import { Button } from "@/components/ui/button";
 import { setAppointmentVehicle, type AdminActionState } from "@/lib/appointments/actions";
 
-type VehicleOption = { id: string; make: string; model: string; year: number | null; registration_number: string | null };
+type VehicleOption = { id: string; make: string | null; model: string | null; year: number | null; registration_number: string | null };
 
 /** Link the appointment to the right one of the customer's vehicles. */
 export function VehicleLinkForm({
