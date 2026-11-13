@@ -7,11 +7,12 @@ import { ChatPanel } from "@/components/site/chat-panel";
 import { EmailText } from "@/components/site/email-text";
 import { SiteHeader } from "@/components/site/site-header";
 import { Button } from "@/components/ui/button";
-import { chatCopy } from "@/config/intake";
+import { chatCopy, howItWorks } from "@/config/intake";
 import { siteConfig } from "@/config/site";
 import { getChatServices } from "@/lib/services/catalog";
+import { pageMetadata } from "@/config/seo";
 
-export const metadata: Metadata = { title: "Contact" };
+export const metadata: Metadata = pageMetadata("/contact");
 
 /**
  * New page (the existing site has no separate Contact page). Built from the existing
@@ -83,7 +84,7 @@ export default async function ContactPage() {
               size="brand-lg"
               className="min-w-[17rem]"
             >
-              Book now
+              {howItWorks.cta}
             </Button>
           </div>
 

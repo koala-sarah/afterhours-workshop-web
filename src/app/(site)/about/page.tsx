@@ -6,8 +6,9 @@ import { Section } from "@/components/layout/section";
 import { ContactSection } from "@/components/site/contact-section";
 import { SiteHeader } from "@/components/site/site-header";
 import { siteConfig } from "@/config/site";
+import { pageMetadata } from "@/config/seo";
 
-export const metadata: Metadata = { title: "About" };
+export const metadata: Metadata = pageMetadata("/about");
 
 export default function AboutPage() {
   const { specialisedAreas, mechanicInfo } = siteConfig.about;

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -6,8 +7,12 @@ import { Section } from "@/components/layout/section";
 import { ServiceGrid } from "@/components/site/service-grid";
 import { SiteHeader } from "@/components/site/site-header";
 import { Button } from "@/components/ui/button";
+import { howItWorks } from "@/config/intake";
 import { siteConfig } from "@/config/site";
 import { getServices } from "@/lib/services/catalog";
+import { pageMetadata } from "@/config/seo";
+
+export const metadata: Metadata = pageMetadata("/");
 
 export default async function HomePage() {
   const services = await getServices();
@@ -76,7 +81,7 @@ export default async function HomePage() {
         </Container>
       </Section>
 
-      {/* New for the booking system: why us + how booking works (verified claims only). */}
+      {/* Why us (verified claims only) + how a request works. */}
       <Section theme="bright" padding="md">
         <Container className="grid gap-12 md:grid-cols-2 md:gap-[8vw]">
           <div className="space-y-6">
@@ -89,20 +94,13 @@ export default async function HomePage() {
             </ul>
           </div>
           <div className="space-y-6">
-            <h2>How booking works</h2>
+            <h2>{howItWorks.heading}</h2>
             <ol className="space-y-4 text-body-lg">
-              <li>
-                <span className="font-heading">1.</span> Choose a service and send us a booking
-                request with your vehicle and preferred time.
-              </li>
-              <li>
-                <span className="font-heading">2.</span> We check availability and contact you to
-                confirm.
-              </li>
-              <li>
-                <span className="font-heading">3.</span> Your appointment is booked once we have
-                confirmed it with you.
-              </li>
+              {howItWorks.steps.map((step, n) => (
+                <li key={step}>
+                  <span className="font-heading">{n + 1}.</span> {step}
+                </li>
+              ))}
             </ol>
           </div>
         </Container>
@@ -125,7 +123,7 @@ export default async function HomePage() {
                 size="brand-lg"
                 className="min-w-[17rem]"
               >
-                Book now
+                {howItWorks.cta}
               </Button>
               <a href={siteConfig.contact.phoneHref} className="hover:underline">
                 {siteConfig.contact.phoneDisplay}

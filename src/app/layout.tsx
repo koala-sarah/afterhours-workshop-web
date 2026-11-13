@@ -20,9 +20,15 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteConfig.url),
   title: {
     default: siteConfig.name,
     template: `%s | ${siteConfig.name}`,
+  },
+  openGraph: {
+    siteName: siteConfig.name,
+    locale: "en_NZ",
+    type: "website",
   },
 };
 

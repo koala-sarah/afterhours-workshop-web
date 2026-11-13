@@ -8,11 +8,9 @@ import { ContactButtons } from "@/components/site/contact-buttons";
 import { RequestForm } from "@/components/site/request-form";
 import { SiteHeader } from "@/components/site/site-header";
 import { PROBLEM_OPTIONS, requestFormCopy as copy } from "@/config/intake";
+import { pageMetadata } from "@/config/seo";
 
-export const metadata: Metadata = {
-  title: copy.heading,
-  description: copy.intro,
-};
+export const metadata: Metadata = pageMetadata("/appointments");
 
 export default function AppointmentsPage({ searchParams }: PageProps<"/appointments">) {
   return (

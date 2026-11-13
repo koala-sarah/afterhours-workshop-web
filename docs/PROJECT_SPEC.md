@@ -163,7 +163,7 @@ Later, missed-call summaries and other channels may land in the same request lis
    12. Request form ✅: UI, Zod, Turnstile, server action, finish screen, contact form
    13. Request chat ✅: flow config, chat UI (opens from every page), step saving, Turnstile
    14. Notifications ✅: Telegram, optional email backup, abandoned-chat alerts, delivery record, server logs
-   15. Contact buttons and local SEO
+   15. Contact buttons and local SEO ✅
    16. Read-only admin: request list, write controls hidden
    17. Testing and deployment
 4. **Test** these scenarios:

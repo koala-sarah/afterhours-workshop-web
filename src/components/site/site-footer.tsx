@@ -1,6 +1,7 @@
 import { Container } from "@/components/layout/container";
 import { siteConfig } from "@/config/site";
 
+import { ContactButtons } from "./contact-buttons";
 import { EmailText } from "./email-text";
 
 /** Black footer used on every page of the existing site: title, map, location, contact. */
@@ -45,6 +46,7 @@ export function SiteFooter() {
             </p>
           </div>
         </div>
+        <ContactButtons className="justify-center pt-4" />
       </Container>
     </footer>
   );

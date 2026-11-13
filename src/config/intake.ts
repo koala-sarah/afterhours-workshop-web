@@ -106,3 +106,18 @@ export const chatCopy = {
   contactAnytime: "You can also call or message us:",
   restart: "Start a new request",
 } as const;
+
+/**
+ * Home page "How it works" (INTAKE_COPY.md section 5, ⬜ placeholder). Replaces
+ * the old booking explanation: a request is not a booking; the mechanic
+ * contacts the customer and arranges everything directly.
+ */
+export const howItWorks = {
+  heading: "How it works",
+  steps: [
+    "Send us a request (it takes a minute), chat with us, or just call or message us.",
+    "A mechanic checks your request and contacts you directly.",
+    "We arrange the details and a time with you.",
+  ],
+  cta: "Send a request",
+} as const;

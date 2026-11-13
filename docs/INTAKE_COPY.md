@@ -75,6 +75,17 @@ Replaces the old booking explanation (no "Online booking will be available in Ju
 | 2 | | ⬜ |
 | 3 | | ⬜ |
 
+Current placeholder (`howItWorks` in `src/config/intake.ts`): 1. Send us a request (it takes a minute), chat with us, or just call or message us. 2. A mechanic checks your request and contacts you directly. 3. We arrange the details and a time with you. The "Book now" buttons now read "Send a request".
+
+## 5b. Search descriptions
+
+Page titles and Google descriptions are in `src/config/seo.ts`, written only from verified details (address, hours, phone, service names). The owner can reword them.
+
+| Item | Status |
+|---|---|
+| Home / Services / About / Contact / Request descriptions | ⬜ |
+| "Schedule today" section text on Home ("Book your slot for car services…", from the existing site) | ⬜ keep or reword (a request is not a booking) |
+
 ## 6. Operator messages
 
 | Use | Owner's text | Status |

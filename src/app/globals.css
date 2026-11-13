@@ -276,6 +276,13 @@
     @apply border-border outline-ring/50;
   }
 
+  /* Phones: focus / scroll-into-view stops above the sticky contact bar (MobileContactBar, 4rem). */
+  @media (width < 48rem) {
+    html {
+      scroll-padding-bottom: calc(4.75rem + env(safe-area-inset-bottom));
+    }
+  }
+
   html {
     @apply font-body antialiased;
     font-size: 16px;

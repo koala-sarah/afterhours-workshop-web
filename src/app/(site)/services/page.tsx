@@ -7,9 +7,11 @@ import { ContactSection } from "@/components/site/contact-section";
 import { ServiceGrid } from "@/components/site/service-grid";
 import { SiteHeader } from "@/components/site/site-header";
 import { Button } from "@/components/ui/button";
+import { howItWorks } from "@/config/intake";
 import { getServices } from "@/lib/services/catalog";
+import { pageMetadata } from "@/config/seo";
 
-export const metadata: Metadata = { title: "Services" };
+export const metadata: Metadata = pageMetadata("/services");
 
 export default async function ServicesPage() {
   const services = await getServices();
@@ -30,7 +32,7 @@ export default async function ServicesPage() {
               size="brand-lg"
               className="min-w-[20.6rem]"
             >
-              Book now
+              {howItWorks.cta}
             </Button>
           </div>
         </Container>

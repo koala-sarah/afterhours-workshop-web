@@ -9,6 +9,8 @@ export const siteConfig = {
   name: "Afterhours Workshop",
   tagline: "Your one & only, local, After-hours workshop.",
   locationTagline: "@ St Johns, Auckland",
+  /** Canonical site URL (NEXT_PUBLIC_SITE_URL), falling back to the existing domain. No trailing slash. */
+  url: (process.env.NEXT_PUBLIC_SITE_URL || "https://www.afterhoursworkshop.co.nz").replace(/\/+$/, ""),
   contact: {
     email: "info@afterhoursworkshop.co.nz",
     phoneDisplay: "(027) 770 - 0486",

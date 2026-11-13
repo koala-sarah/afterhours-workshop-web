@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MenuIcon, XIcon } from "lucide-react";
 
 import { Container } from "@/components/layout/container";
+import { ContactButtons } from "@/components/site/contact-buttons";
 import type { SectionTheme } from "@/components/layout/section";
 import { siteConfig, type NavHref } from "@/config/site";
 
@@ -70,6 +71,9 @@ export function MobileNav({ theme, active }: { theme: SectionTheme; active?: Nav
               ))}
             </ul>
           </nav>
+          <Container className="pb-[max(2rem,env(safe-area-inset-bottom))]">
+            <ContactButtons className="justify-center" />
+          </Container>
         </div>
       )}
     </div>

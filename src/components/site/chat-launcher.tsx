@@ -9,7 +9,8 @@ import { OPEN_CHAT_EVENT } from "@/components/site/open-chat-button";
 import { chatCopy as copy } from "@/config/intake";
 
 /**
- * "Chat with us" corner button on every public page. Opens the request chat
+ * "Chat with us" corner button on every public page (on phones the contact
+ * bar's Chat button opens it instead). Opens the request chat
  * full screen on phones and as a corner panel on larger screens. The chat
  * stays mounted while closed, so answers survive closing and page changes.
  *
@@ -74,7 +75,7 @@ export function ChatLauncher({ services }: { services: ChatService[] }) {
             setOpen(true);
           }}
           aria-haspopup="dialog"
-          className="fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 inline-flex min-h-12 items-center gap-2 rounded-full bg-ink px-5 py-3 font-body text-base font-semibold text-paper shadow-lg hover:opacity-90 focus-visible:ring-3 focus-visible:ring-steel focus-visible:outline-none"
+          className="fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 hidden md:inline-flex min-h-12 items-center gap-2 rounded-full bg-ink px-5 py-3 font-body text-base font-semibold text-paper shadow-lg hover:opacity-90 focus-visible:ring-3 focus-visible:ring-steel focus-visible:outline-none"
         >
           <MessageCircle aria-hidden className="size-5" />
           {copy.launcher}
